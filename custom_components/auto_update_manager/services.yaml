@@ -1,0 +1,53 @@
+run_updates:
+  name: Run updates
+  description: Install selected pending update entities now.
+  fields:
+    entity_id:
+      name: Update entities
+      description: Optional update entities to install. Defaults to all configured pending entities.
+      selector:
+        entity:
+          domain: update
+          multiple: true
+    ignore_window:
+      name: Ignore maintenance window
+      description: Run even if the configured maintenance window is closed.
+      default: false
+      selector:
+        boolean:
+    dry_run:
+      name: Dry run
+      description: Select pending installable updates without installing them.
+      default: false
+      selector:
+        boolean:
+
+scan:
+  name: Scan
+  description: Refresh update entities and pending update counters.
+
+exclude_entities:
+  name: Exclude entities
+  description: Persistently exclude update entities from automatic installation.
+  fields:
+    entity_id:
+      name: Update entities
+      required: true
+      description: Update entities to exclude from automatic updates.
+      selector:
+        entity:
+          domain: update
+          multiple: true
+
+include_entities:
+  name: Include entities
+  description: Remove update entities from the persistent exclusion list.
+  fields:
+    entity_id:
+      name: Update entities
+      required: true
+      description: Update entities to allow automatic updates again.
+      selector:
+        entity:
+          domain: update
+          multiple: true
