@@ -30,6 +30,7 @@ class PatchPilotEntity:
             name=self.manager.entry.title or "PatchPilot",
             manufacturer="PatchPilot",
             model="Update automation manager",
+            configuration_url=f"homeassistant://config/integrations/integration/{DOMAIN}",
         )
 
 

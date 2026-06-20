@@ -9,7 +9,7 @@ import tomllib
 PROJECT_DOMAIN = "patchpilot"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_DIR = PROJECT_ROOT / "custom_components" / PROJECT_DOMAIN
-EXPECTED_VERSION = "0.3.4"
+EXPECTED_VERSION = "0.3.5"
 EXPECTED_HACS_VERSION = "2.0.0"
 EXPECTED_HOME_ASSISTANT_VERSION = "2026.6.0"
 
@@ -114,6 +114,10 @@ def test_entities_share_patchpilot_device_info() -> None:
 
     assert "DeviceInfo" in entity_source
     assert "identifiers={(DOMAIN, self.manager.entry.entry_id)}" in entity_source
+    assert (
+        'configuration_url=f"homeassistant://config/integrations/integration/{DOMAIN}"'
+        in entity_source
+    )
     assert (
         "class PatchPilotSensor(PatchPilotObservableEntity, SensorEntity)"
         in sensor_source

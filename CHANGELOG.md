@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.5 - 2026-06-20
+
+- Add a PatchPilot device configuration URL that opens the integration
+  configuration page from the service/device UI.
+
 ## 0.3.4 - 2026-06-20
 
 - List skipped pending updates by reason in PatchPilot run history, last-run
