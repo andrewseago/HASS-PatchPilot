@@ -1,4 +1,4 @@
-"""Tests for Auto Update Manager pure update logic."""
+"""Tests for PatchPilot pure update logic."""
 
 from __future__ import annotations
 
@@ -11,10 +11,10 @@ import unittest
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
     / "custom_components"
-    / "auto_update_manager"
+    / "patchpilot"
     / "update_logic.py"
 )
-SPEC = importlib.util.spec_from_file_location("auto_update_manager_update_logic", MODULE_PATH)
+SPEC = importlib.util.spec_from_file_location("patchpilot_update_logic", MODULE_PATH)
 assert SPEC is not None
 update_logic = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None

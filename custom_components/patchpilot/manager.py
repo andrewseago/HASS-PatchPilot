@@ -73,7 +73,7 @@ class UpdateRunResult:
     failed: dict[str, str] = field(default_factory=dict)
 
 
-class AutoUpdateManager:
+class PatchPilotManager:
     """Coordinate automatic Home Assistant update installs."""
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:

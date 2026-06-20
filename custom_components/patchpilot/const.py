@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from datetime import time
 
-DOMAIN = "auto_update_manager"
+DOMAIN = "patchpilot"
 PLATFORMS = ["sensor"]
 
 CONF_ENABLED = "enabled"

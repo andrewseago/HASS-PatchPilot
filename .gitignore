@@ -12,3 +12,6 @@ htmlcov/
 venv/
 .env
 *.log
+
+# Local source export used to generate the Home Assistant brand icon.
+custom_components/patchpilot/icon.png

@@ -49,7 +49,7 @@ from .const import (
 from .update_logic import parse_time
 
 
-class AutoUpdateManagerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
+class PatchPilotConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a PatchPilot config flow."""
 
     VERSION = 1
@@ -82,10 +82,10 @@ class AutoUpdateManagerConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         config_entry: config_entries.ConfigEntry,
     ) -> config_entries.OptionsFlow:
         """Create the options flow."""
-        return AutoUpdateManagerOptionsFlow(config_entry)
+        return PatchPilotOptionsFlow(config_entry)
 
 
-class AutoUpdateManagerOptionsFlow(config_entries.OptionsFlow):
+class PatchPilotOptionsFlow(config_entries.OptionsFlow):
     """Handle options."""
 
     def __init__(self, config_entry: config_entries.ConfigEntry) -> None:

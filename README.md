@@ -1,5 +1,7 @@
 # PatchPilot
 
+![PatchPilot icon](custom_components/patchpilot/brand/icon.png)
+
 PatchPilot is a Home Assistant custom integration that installs selected pending
 `update` entities during a maintenance window.
 
@@ -30,14 +32,14 @@ and other integrations that expose installable `update` entities.
 
 ### Manual install
 
-1. Copy `custom_components/auto_update_manager` into the Home Assistant
+1. Copy `custom_components/patchpilot` into the Home Assistant
    `custom_components` directory.
 2. Restart Home Assistant.
 3. Add PatchPilot from **Settings > Devices & services**.
 
 ## Services
 
-### `auto_update_manager.run_updates`
+### `patchpilot.run_updates`
 
 Run an update pass manually.
 
@@ -47,15 +49,15 @@ Optional fields:
 - `ignore_window`: run outside the configured maintenance window.
 - `dry_run`: select matching pending entities without installing them.
 
-### `auto_update_manager.scan`
+### `patchpilot.scan`
 
 Refresh update entities and the pending-update counter.
 
-### `auto_update_manager.exclude_entities`
+### `patchpilot.exclude_entities`
 
 Persistently add one or more `update` entities to the exclusion list.
 
-### `auto_update_manager.include_entities`
+### `patchpilot.include_entities`
 
 Remove one or more `update` entities from the exclusion list.
 

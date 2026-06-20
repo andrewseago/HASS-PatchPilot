@@ -1,6 +1,6 @@
 # PatchPilot
 
-![PatchPilot icon](./icon.svg)
+![PatchPilot icon](./brand/icon.png)
 
 PatchPilot installs pending Home Assistant `update` entities during a maintenance
 window. This covers Home Assistant Core, Home Assistant OS, Supervisor, add-ons,
@@ -49,7 +49,7 @@ It does not ship a custom Lovelace panel.
 
 ## Services
 
-### `auto_update_manager.run_updates`
+### `patchpilot.run_updates`
 
 Run an update pass manually.
 
@@ -59,15 +59,15 @@ Optional fields:
 - `ignore_window`: run outside the configured maintenance window.
 - `dry_run`: select matching pending entities without installing them.
 
-### `auto_update_manager.scan`
+### `patchpilot.scan`
 
 Refresh update entities and the pending-update counter.
 
-### `auto_update_manager.exclude_entities`
+### `patchpilot.exclude_entities`
 
 Persistently add one or more `update` entities to the exclusion list.
 
-### `auto_update_manager.include_entities`
+### `patchpilot.include_entities`
 
 Remove one or more `update` entities from the exclusion list so they can be
 updated automatically again.

@@ -24,7 +24,7 @@ from .const import (
     SERVICE_RUN_UPDATES,
     SERVICE_SCAN,
 )
-from .manager import AutoUpdateManager, service_options_from_call
+from .manager import PatchPilotManager, service_options_from_call
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -45,7 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN].setdefault(DATA_MANAGERS, {})
 
-    manager = AutoUpdateManager(hass, entry)
+    manager = PatchPilotManager(hass, entry)
     hass.data[DOMAIN][DATA_MANAGERS][entry.entry_id] = manager
 
     await manager.async_start()
@@ -132,7 +132,7 @@ def _async_register_services(hass: HomeAssistant) -> None:
 
 def _selected_managers(
     hass: HomeAssistant, call_data: dict[str, Any]
-) -> list[AutoUpdateManager]:
+) -> list[PatchPilotManager]:
     """Return managers selected by a service call."""
     managers = list(hass.data[DOMAIN][DATA_MANAGERS].values())
     config_entry_id = call_data.get("config_entry_id")

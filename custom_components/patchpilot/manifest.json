@@ -1,5 +1,5 @@
 {
-  "domain": "auto_update_manager",
+  "domain": "patchpilot",
   "name": "PatchPilot",
   "codeowners": ["@andrewseago"],
   "config_flow": true,

@@ -13,7 +13,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import DATA_MANAGERS, DOMAIN
-from .manager import AutoUpdateManager
+from .manager import PatchPilotManager
 
 
 async def async_setup_entry(
@@ -34,13 +34,13 @@ async def async_setup_entry(
     )
 
 
-class AutoUpdateManagerSensor(SensorEntity):
+class PatchPilotSensor(SensorEntity):
     """Base sensor for PatchPilot."""
 
     _attr_has_entity_name = True
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(self, manager: AutoUpdateManager, key: str, name: str) -> None:
+    def __init__(self, manager: PatchPilotManager, key: str, name: str) -> None:
         """Initialize sensor."""
         self.manager = manager
         self._attr_name = name
@@ -65,12 +65,12 @@ class AutoUpdateManagerSensor(SensorEntity):
         self.async_write_ha_state()
 
 
-class PendingUpdatesSensor(AutoUpdateManagerSensor):
+class PendingUpdatesSensor(PatchPilotSensor):
     """Pending update count."""
 
     _attr_icon = "mdi:update"
 
-    def __init__(self, manager: AutoUpdateManager) -> None:
+    def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize sensor."""
         super().__init__(manager, "pending_updates", "Pending updates")
 
@@ -88,13 +88,13 @@ class PendingUpdatesSensor(AutoUpdateManagerSensor):
         }
 
 
-class LastRunSensor(AutoUpdateManagerSensor):
+class LastRunSensor(PatchPilotSensor):
     """Last update run timestamp."""
 
     _attr_device_class = SensorDeviceClass.TIMESTAMP
     _attr_icon = "mdi:clock-check-outline"
 
-    def __init__(self, manager: AutoUpdateManager) -> None:
+    def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize sensor."""
         super().__init__(manager, "last_run", "Last run")
 
@@ -121,12 +121,12 @@ class LastRunSensor(AutoUpdateManagerSensor):
         }
 
 
-class LastInstalledCountSensor(AutoUpdateManagerSensor):
+class LastInstalledCountSensor(PatchPilotSensor):
     """Last installed update count."""
 
     _attr_icon = "mdi:package-up"
 
-    def __init__(self, manager: AutoUpdateManager) -> None:
+    def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize sensor."""
         super().__init__(manager, "last_installed_count", "Last installed count")
 
@@ -138,12 +138,12 @@ class LastInstalledCountSensor(AutoUpdateManagerSensor):
         return len(self.manager.last_result.installed)
 
 
-class LastFailedCountSensor(AutoUpdateManagerSensor):
+class LastFailedCountSensor(PatchPilotSensor):
     """Last failed update count."""
 
     _attr_icon = "mdi:alert-circle-outline"
 
-    def __init__(self, manager: AutoUpdateManager) -> None:
+    def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize sensor."""
         super().__init__(manager, "last_failed_count", "Last failed count")
 
@@ -155,12 +155,12 @@ class LastFailedCountSensor(AutoUpdateManagerSensor):
         return len(self.manager.last_result.failed)
 
 
-class RunHistorySensor(AutoUpdateManagerSensor):
+class RunHistorySensor(PatchPilotSensor):
     """Compact run-history sensor."""
 
     _attr_icon = "mdi:history"
 
-    def __init__(self, manager: AutoUpdateManager) -> None:
+    def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize sensor."""
         super().__init__(manager, "run_history", "Run history")
 
