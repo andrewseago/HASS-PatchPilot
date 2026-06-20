@@ -24,9 +24,6 @@
     "error": {
       "invalid_time": "Use HH:MM or HH:MM:SS.",
       "empty_include_patterns": "At least one include pattern is required."
-    },
-    "abort": {
-      "already_configured": "PatchPilot is already configured."
     }
   },
   "options": {

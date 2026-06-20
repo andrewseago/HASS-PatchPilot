@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1 - 2026-06-20
+
+- Allow creating a fresh PatchPilot config entry when Home Assistant has a stale
+  hidden entry that would otherwise trigger `already_configured`.
+
 ## 0.3.0 - 2026-06-20
 
 - Add native PatchPilot UI entities under one integration device.
