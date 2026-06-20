@@ -9,7 +9,7 @@ import tomllib
 PROJECT_DOMAIN = "patchpilot"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_DIR = PROJECT_ROOT / "custom_components" / PROJECT_DOMAIN
-EXPECTED_VERSION = "0.2.0"
+EXPECTED_VERSION = "0.3.0"
 EXPECTED_HACS_VERSION = "2.0.0"
 EXPECTED_HOME_ASSISTANT_VERSION = "2026.6.0"
 
@@ -39,6 +39,9 @@ def test_repository_has_standard_integration_files() -> None:
         "requirements.txt",
         "requirements_dev.txt",
         "custom_components/__init__.py",
+        "custom_components/patchpilot/button.py",
+        "custom_components/patchpilot/entity.py",
+        "custom_components/patchpilot/switch.py",
         "custom_components/patchpilot/translations/en.json",
     )
 
@@ -83,3 +86,48 @@ def test_ci_workflow_validates_hacs_hassfest_and_tests() -> None:
     assert "home-assistant/actions/hassfest" in workflow
     assert "python-version: ${{ env.DEFAULT_PYTHON }}" in workflow
     assert "pytest" in workflow
+
+
+def test_integration_forwards_ui_control_platforms() -> None:
+    """PatchPilot should expose native UI controls under its config entry."""
+    const_source = (INTEGRATION_DIR / "const.py").read_text()
+    init_source = (INTEGRATION_DIR / "__init__.py").read_text()
+
+    assert 'PLATFORMS = ["button", "sensor", "switch"]' in const_source
+    assert "async_forward_entry_setups(entry, PLATFORMS)" in init_source
+
+
+def test_entities_share_patchpilot_device_info() -> None:
+    """Entities should be grouped as one PatchPilot device in the UI."""
+    entity_source = (INTEGRATION_DIR / "entity.py").read_text()
+    sensor_source = (INTEGRATION_DIR / "sensor.py").read_text()
+    switch_source = (INTEGRATION_DIR / "switch.py").read_text()
+    button_source = (INTEGRATION_DIR / "button.py").read_text()
+
+    assert "DeviceInfo" in entity_source
+    assert "identifiers={(DOMAIN, self.manager.entry.entry_id)}" in entity_source
+    assert (
+        "class PatchPilotSensor(PatchPilotObservableEntity, SensorEntity)"
+        in sensor_source
+    )
+    assert (
+        "class PatchPilotSwitch(PatchPilotObservableEntity, SwitchEntity)"
+        in switch_source
+    )
+    assert "class PatchPilotButton(PatchPilotEntity, ButtonEntity)" in button_source
+
+
+def test_ui_control_entities_call_manager_actions() -> None:
+    """Button and switch entities should expose the configured service actions."""
+    switch_source = (INTEGRATION_DIR / "switch.py").read_text()
+    button_source = (INTEGRATION_DIR / "button.py").read_text()
+    manager_source = (INTEGRATION_DIR / "manager.py").read_text()
+
+    assert "async_set_enabled" in manager_source
+    assert "await self.manager.async_set_enabled(True)" in switch_source
+    assert "await self.manager.async_set_enabled(False)" in switch_source
+    assert "await self.manager.async_scan()" in button_source
+    assert 'reason="button_dry_run"' in button_source
+    assert "dry_run=True" in button_source
+    assert 'reason="button"' in button_source
+    assert "ignore_window=True" in button_source

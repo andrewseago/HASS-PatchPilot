@@ -348,6 +348,13 @@ class PatchPilotManager:
         await self.async_scan()
         self._notify_listeners()
 
+    async def async_set_enabled(self, enabled: bool) -> None:
+        """Persistently enable or disable automatic update runs."""
+        options = {**self.entry.options}
+        options[CONF_ENABLED] = enabled
+        self.hass.config_entries.async_update_entry(self.entry, options=options)
+        self._notify_listeners()
+
     async def _async_install(self, candidate: UpdateCandidate) -> None:
         """Install one update entity."""
         service_data: dict[str, Any] = {}

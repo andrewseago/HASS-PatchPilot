@@ -38,6 +38,19 @@ and other integrations that expose installable `update` entities.
 2. Restart Home Assistant.
 3. Add PatchPilot from **Settings > Devices & services**.
 
+## Home Assistant UI
+
+After configuring PatchPilot from **Settings > Devices & services**, Home
+Assistant creates one PatchPilot device under the integration entry. That device
+groups the diagnostic sensors with these direct controls:
+
+- `Automatic updates` switch
+- `Scan updates` button
+- `Dry run` button
+- `Run updates now` button
+
+The buttons use the same manager logic as the services below.
+
 ## Services
 
 ### `patchpilot.run_updates`

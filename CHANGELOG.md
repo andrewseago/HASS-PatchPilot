@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.0 - 2026-06-20
+
+- Add native PatchPilot UI entities under one integration device.
+- Add Scan updates, Dry run, and Run updates now buttons for direct control from
+  the integration/device page.
+- Add an Automatic updates switch that updates the configured enabled setting.
+
 ## 0.2.0 - 2026-06-20
 
 - Add standard Home Assistant/HACS repository packaging, CI validation, project

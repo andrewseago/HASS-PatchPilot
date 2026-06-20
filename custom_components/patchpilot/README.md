@@ -38,6 +38,9 @@ HACS, and any other integration that exposes installable update entities.
 The integration uses native Home Assistant UI surfaces:
 
 - Config flow under **Settings > Devices & services**.
+- One PatchPilot device under the configured integration entry.
+- Device controls for automatic updates, scanning, dry runs, and immediate
+  update runs.
 - Options flow for maintenance window, include/exclude patterns, backup
   behavior, exact excluded update entities, failure notifications, and
   run-history size.
