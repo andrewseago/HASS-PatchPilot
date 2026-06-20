@@ -65,7 +65,8 @@ Open **Settings > Devices & services > PatchPilot > Configure** to change:
 - Exact excluded `update` entities.
 - Backup requests when supported by the update entity.
 - Maximum updates per run, where `0` means no limit.
-- Whether newly pending updates trigger an automatic run.
+- Whether newly pending updates trigger an automatic run during the maintenance
+  window.
 - Failure notifications.
 - Retained run-history size.
 

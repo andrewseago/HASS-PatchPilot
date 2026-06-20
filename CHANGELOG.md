@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.7 - 2026-06-20
+
+- Make state-change-triggered automatic runs respect the enabled setting and
+  maintenance window before scheduling a run, preventing outside-window
+  state-change events from filling run history with skipped entries.
+
 ## 0.3.6 - 2026-06-20
 
 - Debounce update-state-change triggers so bursts of update entity changes create

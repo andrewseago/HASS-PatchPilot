@@ -9,7 +9,7 @@ import tomllib
 PROJECT_DOMAIN = "patchpilot"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_DIR = PROJECT_ROOT / "custom_components" / PROJECT_DOMAIN
-EXPECTED_VERSION = "0.3.6"
+EXPECTED_VERSION = "0.3.7"
 EXPECTED_HACS_VERSION = "2.0.0"
 EXPECTED_HOME_ASSISTANT_VERSION = "2026.6.0"
 
@@ -197,6 +197,14 @@ def test_manager_debounces_update_state_change_runs() -> None:
     assert "if self._state_change_task is not None" in manager_source
     assert "and not self._state_change_task.done()" in manager_source
     assert "self._state_change_task.cancel()" in manager_source
+
+
+def test_state_change_runs_respect_automatic_update_window() -> None:
+    """State-change auto-runs should not spam outside-window skipped history."""
+    manager_source = (INTEGRATION_DIR / "manager.py").read_text()
+
+    assert "if not self.enabled or not self._inside_window():" in manager_source
+    assert "return" in manager_source
 
 
 def test_manager_finishes_runs_when_post_run_refresh_fails() -> None:

@@ -271,6 +271,8 @@ class PatchPilotManager:
         new_state = event.data.get("new_state")
         if not isinstance(new_state, State) or new_state.state != "on":
             return
+        if not self.enabled or not self._inside_window():
+            return
         if self._state_change_task is not None and not self._state_change_task.done():
             return
         self._state_change_task = self.hass.async_create_task(
