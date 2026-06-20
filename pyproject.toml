@@ -1,6 +1,6 @@
 [project]
 name = "hass-patchpilot"
-version = "0.3.1"
+version = "0.3.2"
 description = "PatchPilot Home Assistant custom integration"
 readme = "README.md"
 requires-python = ">=3.13"

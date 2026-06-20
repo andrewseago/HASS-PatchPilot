@@ -5,9 +5,10 @@
   "config_flow": true,
   "dependencies": [],
   "documentation": "https://github.com/andrewseago/HASS-PatchPilot",
-  "integration_type": "helper",
+  "integration_type": "service",
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/andrewseago/HASS-PatchPilot/issues",
   "requirements": [],
-  "version": "0.3.1"
+  "single_config_entry": true,
+  "version": "0.3.2"
 }

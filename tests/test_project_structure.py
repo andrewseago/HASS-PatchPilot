@@ -9,7 +9,7 @@ import tomllib
 PROJECT_DOMAIN = "patchpilot"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_DIR = PROJECT_ROOT / "custom_components" / PROJECT_DOMAIN
-EXPECTED_VERSION = "0.3.1"
+EXPECTED_VERSION = "0.3.2"
 EXPECTED_HACS_VERSION = "2.0.0"
 EXPECTED_HOME_ASSISTANT_VERSION = "2026.6.0"
 
@@ -24,6 +24,14 @@ def test_manifest_domain_matches_project_domain() -> None:
     manifest = json.loads((INTEGRATION_DIR / "manifest.json").read_text())
 
     assert manifest["domain"] == PROJECT_DOMAIN
+
+
+def test_manifest_exposes_patchpilot_as_single_service_entry() -> None:
+    """PatchPilot should be a normal service integration with one config entry."""
+    manifest = json.loads((INTEGRATION_DIR / "manifest.json").read_text())
+
+    assert manifest["integration_type"] == "service"
+    assert manifest["single_config_entry"] is True
 
 
 def test_repository_has_standard_integration_files() -> None:

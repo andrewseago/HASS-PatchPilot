@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.2 - 2026-06-20
+
+- Classify PatchPilot as a service integration so it appears with configured
+  service integrations in Home Assistant.
+- Use Home Assistant's `single_config_entry` manifest guard to prevent duplicate
+  PatchPilot config entries from repeated setup attempts.
+
 ## 0.3.1 - 2026-06-20
 
 - Allow creating a fresh PatchPilot config entry when Home Assistant has a stale
