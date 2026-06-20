@@ -15,8 +15,8 @@ HACS, and any other integration that exposes installable update entities.
 - Runs sequentially, not concurrently.
 - Creates a Home Assistant repair issue if any install fails.
 - Creates a persistent notification when installs fail, if enabled.
-- Provides sensors for pending count, last run, last installed count, and last
-  failed count.
+- Provides sensors for raw pending count, installable count, skipped count, last
+  run, last installed count, and last failed count.
 - Provides a diagnostic run-history sensor with retained run summaries.
 
 ## Default options
@@ -41,8 +41,8 @@ The integration uses native Home Assistant UI surfaces:
 - Options flow for maintenance window, include/exclude patterns, backup
   behavior, exact excluded update entities, failure notifications, and
   run-history size.
-- Diagnostic sensors for pending updates, last run, installed count, failed
-  count, and run history.
+- Diagnostic sensors for pending updates, installable updates, skipped updates,
+  last run, installed count, failed count, and run history.
 - Repair issues and persistent notifications for failures.
 
 It does not ship a custom Lovelace panel.

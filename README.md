@@ -17,8 +17,9 @@ and other integrations that expose installable `update` entities.
 - Supports include and exclude patterns plus exact entity exclusions.
 - Provides services for manual runs, dry runs, scans, and exclusion management.
 - Creates a repair issue and optional persistent notification when installs fail.
-- Exposes diagnostic sensors for pending updates, last run, install count,
-  failure count, and retained run history.
+- Exposes diagnostic sensors for raw pending updates, installable updates,
+  skipped updates, last run, install count, failure count, and retained run
+  history.
 
 ## Installation
 
@@ -70,5 +71,5 @@ python3 -m unittest discover -s tests -v
 pytest -q
 ```
 
-The current tests cover the pure update-selection helpers. Full Home Assistant
-runtime tests are not included yet.
+The current tests cover the pure update-selection helpers and repository
+structure. Full Home Assistant runtime tests are not included yet.

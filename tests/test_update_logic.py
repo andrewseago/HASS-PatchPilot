@@ -26,6 +26,7 @@ is_allowed_entity = update_logic.is_allowed_entity
 is_time_in_window = update_logic.is_time_in_window
 parse_time = update_logic.parse_time
 select_pending_updates = update_logic.select_pending_updates
+summarize_update_candidates = update_logic.summarize_update_candidates
 
 
 class UpdateLogicTests(unittest.TestCase):
@@ -88,6 +89,41 @@ class UpdateLogicTests(unittest.TestCase):
             install_feature,
         )
         self.assertEqual([candidate.entity_id for candidate in selected], ["update.core"])
+
+    def test_summary_separates_pending_from_installable_updates(self) -> None:
+        install_feature = 1
+        candidates = [
+            UpdateCandidate("update.core", "on", install_feature),
+            UpdateCandidate("update.hacs", "on", 0),
+            UpdateCandidate("update.router", "on", install_feature),
+            UpdateCandidate("update.idle", "off", install_feature),
+        ]
+
+        summary = summarize_update_candidates(
+            candidates,
+            ["update.*"],
+            ["update.router"],
+            [],
+            install_feature,
+            0,
+        )
+
+        self.assertEqual(
+            [candidate.entity_id for candidate in summary.pending],
+            ["update.core", "update.hacs", "update.router"],
+        )
+        self.assertEqual(
+            [candidate.entity_id for candidate in summary.installable],
+            ["update.core"],
+        )
+        self.assertEqual(
+            [candidate.entity_id for candidate in summary.uninstallable],
+            ["update.hacs"],
+        )
+        self.assertEqual(
+            [candidate.entity_id for candidate in summary.filtered],
+            ["update.router"],
+        )
 
 
 if __name__ == "__main__":

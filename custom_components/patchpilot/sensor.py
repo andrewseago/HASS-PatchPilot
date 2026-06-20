@@ -26,6 +26,8 @@ async def async_setup_entry(
     async_add_entities(
         [
             PendingUpdatesSensor(manager),
+            InstallableUpdatesSensor(manager),
+            SkippedUpdatesSensor(manager),
             LastRunSensor(manager),
             LastInstalledCountSensor(manager),
             LastFailedCountSensor(manager),
@@ -66,7 +68,7 @@ class PatchPilotSensor(SensorEntity):
 
 
 class PendingUpdatesSensor(PatchPilotSensor):
-    """Pending update count."""
+    """Raw pending update count."""
 
     _attr_icon = "mdi:update"
 
@@ -81,9 +83,56 @@ class PendingUpdatesSensor(PatchPilotSensor):
 
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
-        """Return pending entity ids."""
+        """Return pending entity ids and selection breakdown."""
         return {
             "entities": self.manager.last_pending,
+            "installable_entities": self.manager.last_installable,
+            "filtered_entities": self.manager.last_filtered,
+            "uninstallable_entities": self.manager.last_uninstallable,
+            "excluded_entities": self.manager.excluded_entities,
+        }
+
+
+class InstallableUpdatesSensor(PatchPilotSensor):
+    """Installable pending update count."""
+
+    _attr_icon = "mdi:package-up"
+
+    def __init__(self, manager: PatchPilotManager) -> None:
+        """Initialize sensor."""
+        super().__init__(manager, "installable_updates", "Installable updates")
+
+    @property
+    def native_value(self) -> int:
+        """Return installable pending update count."""
+        return len(self.manager.last_installable)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return installable pending entity ids."""
+        return {"entities": self.manager.last_installable}
+
+
+class SkippedUpdatesSensor(PatchPilotSensor):
+    """Skipped pending update count."""
+
+    _attr_icon = "mdi:update-off"
+
+    def __init__(self, manager: PatchPilotManager) -> None:
+        """Initialize sensor."""
+        super().__init__(manager, "skipped_updates", "Skipped updates")
+
+    @property
+    def native_value(self) -> int:
+        """Return skipped pending update count."""
+        return len(self.manager.last_filtered) + len(self.manager.last_uninstallable)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """Return skipped pending update entity ids."""
+        return {
+            "filtered_entities": self.manager.last_filtered,
+            "uninstallable_entities": self.manager.last_uninstallable,
             "excluded_entities": self.manager.excluded_entities,
         }
 

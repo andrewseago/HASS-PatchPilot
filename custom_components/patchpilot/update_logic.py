@@ -20,6 +20,16 @@ class UpdateCandidate:
     attributes: Mapping[str, object] | None = None
 
 
+@dataclass(frozen=True)
+class UpdateSelectionSummary:
+    """Breakdown of pending update entities."""
+
+    pending: list[UpdateCandidate]
+    installable: list[UpdateCandidate]
+    uninstallable: list[UpdateCandidate]
+    filtered: list[UpdateCandidate]
+
+
 def parse_time(value: str) -> time:
     """Parse a Home Assistant-style time string."""
     parts = value.split(":")
@@ -68,20 +78,54 @@ def select_pending_updates(
     max_updates: int = 0,
 ) -> list[UpdateCandidate]:
     """Select pending installable update entities."""
-    selected: list[UpdateCandidate] = []
+    return summarize_update_candidates(
+        candidates,
+        include_patterns,
+        exclude_patterns,
+        excluded_entities,
+        install_feature,
+        max_updates,
+    ).installable
+
+
+def summarize_update_candidates(
+    candidates: Iterable[UpdateCandidate],
+    include_patterns: Iterable[str],
+    exclude_patterns: Iterable[str],
+    excluded_entities: Iterable[str],
+    install_feature: int,
+    max_updates: int = 0,
+) -> UpdateSelectionSummary:
+    """Return a breakdown of pending update entities and selected installs."""
+    pending: list[UpdateCandidate] = []
+    installable: list[UpdateCandidate] = []
+    uninstallable: list[UpdateCandidate] = []
+    filtered: list[UpdateCandidate] = []
+
     for candidate in candidates:
         if candidate.state != STATE_PENDING:
             continue
+
+        pending.append(candidate)
         if not is_allowed_entity(
             candidate.entity_id,
             include_patterns,
             exclude_patterns,
             excluded_entities,
         ):
+            filtered.append(candidate)
             continue
+
         if not candidate.supported_features & install_feature:
+            uninstallable.append(candidate)
             continue
-        selected.append(candidate)
-        if max_updates > 0 and len(selected) >= max_updates:
-            break
-    return selected
+
+        if max_updates <= 0 or len(installable) < max_updates:
+            installable.append(candidate)
+
+    return UpdateSelectionSummary(
+        pending=pending,
+        installable=installable,
+        uninstallable=uninstallable,
+        filtered=filtered,
+    )

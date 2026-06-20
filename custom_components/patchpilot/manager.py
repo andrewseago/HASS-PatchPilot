@@ -47,7 +47,13 @@ from .const import (
     DEFAULT_WINDOW_START,
     DOMAIN,
 )
-from .update_logic import UpdateCandidate, is_time_in_window, parse_time, select_pending_updates
+from .update_logic import (
+    UpdateCandidate,
+    UpdateSelectionSummary,
+    is_time_in_window,
+    parse_time,
+    summarize_update_candidates,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -85,6 +91,9 @@ class PatchPilotManager:
         self._lock = asyncio.Lock()
         self.last_result: UpdateRunResult | None = None
         self.last_pending: list[str] = []
+        self.last_installable: list[str] = []
+        self.last_filtered: list[str] = []
+        self.last_uninstallable: list[str] = []
         self.history: list[dict[str, Any]] = []
 
     @property
@@ -170,7 +179,7 @@ class PatchPilotManager:
                 target={ATTR_ENTITY_ID: update_entities},
                 blocking=True,
             )
-        self.last_pending = [candidate.entity_id for candidate in self._pending_candidates()]
+        self._refresh_selection_state()
         self._notify_listeners()
 
     async def async_run(
@@ -241,9 +250,21 @@ class PatchPilotManager:
         result.finished_at = dt_util.utcnow()
         self.last_result = result
         self._append_history(result)
-        self.last_pending = [candidate.entity_id for candidate in self._pending_candidates()]
+        self._refresh_selection_state()
         self._notify_listeners()
         return result
+
+    def _refresh_selection_state(self) -> None:
+        """Refresh cached pending/installable update entity lists."""
+        summary = self._selection_summary()
+        self.last_pending = [candidate.entity_id for candidate in summary.pending]
+        self.last_installable = [
+            candidate.entity_id for candidate in summary.installable
+        ]
+        self.last_filtered = [candidate.entity_id for candidate in summary.filtered]
+        self.last_uninstallable = [
+            candidate.entity_id for candidate in summary.uninstallable
+        ]
 
     def _inside_window(self) -> bool:
         """Return true when current local time is in the maintenance window."""
@@ -263,6 +284,26 @@ class PatchPilotManager:
         self, entity_ids: Iterable[str] | None = None
     ) -> list[UpdateCandidate]:
         """Return selected pending update candidates."""
+        return self._selection_summary(entity_ids).installable
+
+    def _selection_summary(
+        self, entity_ids: Iterable[str] | None = None
+    ) -> UpdateSelectionSummary:
+        """Return selected pending update candidates with skip breakdown."""
+        candidates = self._update_candidates(entity_ids)
+        return summarize_update_candidates(
+            candidates,
+            self.include_patterns,
+            self.exclude_patterns,
+            self.excluded_entities,
+            int(UpdateEntityFeature.INSTALL),
+            int(self.options.get(CONF_MAX_UPDATES_PER_RUN, DEFAULT_MAX_UPDATES_PER_RUN)),
+        )
+
+    def _update_candidates(
+        self, entity_ids: Iterable[str] | None = None
+    ) -> list[UpdateCandidate]:
+        """Return normalized update entity candidates."""
         explicit_ids = set(entity_ids or [])
         candidates: list[UpdateCandidate] = []
         for state in self._update_states():
@@ -276,14 +317,7 @@ class PatchPilotManager:
                     attributes=state.attributes,
                 )
             )
-        return select_pending_updates(
-            candidates,
-            self.include_patterns,
-            self.exclude_patterns,
-            self.excluded_entities,
-            int(UpdateEntityFeature.INSTALL),
-            int(self.options.get(CONF_MAX_UPDATES_PER_RUN, DEFAULT_MAX_UPDATES_PER_RUN)),
-        )
+        return candidates
 
     async def async_set_entities_excluded(
         self, entity_ids: Iterable[str], excluded: bool
