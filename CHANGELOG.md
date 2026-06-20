@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.3 - 2026-06-20
+
+- Add a persistent notification requesting a Home Assistant restart after
+  PatchPilot finishes installing one or more updates.
+
 ## 0.3.2 - 2026-06-20
 
 - Classify PatchPilot as a service integration so it appears with configured

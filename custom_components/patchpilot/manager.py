@@ -232,6 +232,9 @@ class PatchPilotManager:
             else:
                 ir.async_delete_issue(self.hass, DOMAIN, self._failure_issue_id)
 
+            if result.installed:
+                await self._async_notify_restart_required(result)
+
             await self.async_scan()
             return self._finish(result)
 
@@ -409,6 +412,28 @@ class PatchPilotManager:
                 "title": "PatchPilot failed",
                 "message": f"The last update run failed for:\n\n{entities}",
                 "notification_id": f"{DOMAIN}_{self.entry.entry_id}_last_run_failed",
+            },
+            blocking=False,
+        )
+
+    async def _async_notify_restart_required(self, result: UpdateRunResult) -> None:
+        """Create a persistent notification requesting a Home Assistant restart."""
+        if not self.hass.services.has_service(
+            PERSISTENT_NOTIFICATION_DOMAIN, PERSISTENT_NOTIFICATION_CREATE
+        ):
+            return
+        entities = "\n".join(f"- `{entity_id}`" for entity_id in result.installed)
+        await self.hass.services.async_call(
+            PERSISTENT_NOTIFICATION_DOMAIN,
+            PERSISTENT_NOTIFICATION_CREATE,
+            {
+                "title": "PatchPilot restart required",
+                "message": (
+                    "PatchPilot finished installing updates for:\n\n"
+                    f"{entities}\n\n"
+                    "Restart Home Assistant to finish applying the updates."
+                ),
+                "notification_id": f"{DOMAIN}_{self.entry.entry_id}_restart_required",
             },
             blocking=False,
         )
