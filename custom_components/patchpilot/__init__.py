@@ -5,12 +5,11 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import voluptuous as vol
-
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_ENTITY_ID
 from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
+import voluptuous as vol
 
 from .const import (
     ATTR_DRY_RUN,
@@ -138,8 +137,6 @@ def _selected_managers(
     config_entry_id = call_data.get("config_entry_id")
     if config_entry_id:
         managers = [
-            manager
-            for manager in managers
-            if manager.entry.entry_id == config_entry_id
+            manager for manager in managers if manager.entry.entry_id == config_entry_id
         ]
     return managers

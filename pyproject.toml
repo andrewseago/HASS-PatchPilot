@@ -1,0 +1,40 @@
+[project]
+name = "hass-patchpilot"
+version = "0.2.0"
+description = "PatchPilot Home Assistant custom integration"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.black]
+target-version = ["py313"]
+
+[tool.isort]
+profile = "black"
+force_sort_within_sections = true
+known_first_party = [
+  "custom_components.patchpilot",
+  "tests",
+]
+forced_separate = [
+  "tests",
+]
+combine_as_imports = true
+default_section = "THIRDPARTY"
+
+[tool.pytest.ini_options]
+testpaths = [
+  "tests",
+]
+pythonpath = [
+  ".",
+]
+norecursedirs = [
+  ".git",
+  ".venv",
+]
+
+[tool.mypy]
+ignore_missing_imports = true
+python_version = "3.13"
+show_error_codes = true

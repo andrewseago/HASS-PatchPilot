@@ -1,3 +1,5 @@
 {
-  "name": "PatchPilot"
+  "hacs": "2.0.0",
+  "name": "PatchPilot",
+  "homeassistant": "2026.6.0"
 }

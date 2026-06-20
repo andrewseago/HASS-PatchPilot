@@ -4,8 +4,6 @@ from __future__ import annotations
 
 from typing import Any
 
-import voluptuous as vol
-
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.helpers.selector import (
@@ -18,13 +16,14 @@ from homeassistant.helpers.selector import (
     TextSelector,
     TextSelectorConfig,
 )
+import voluptuous as vol
 
 from .const import (
     CONF_CHECK_INTERVAL_MINUTES,
     CONF_CREATE_BACKUP,
     CONF_ENABLED,
-    CONF_EXCLUDED_ENTITIES,
     CONF_EXCLUDE_PATTERNS,
+    CONF_EXCLUDED_ENTITIES,
     CONF_INCLUDE_PATTERNS,
     CONF_LOG_SIZE,
     CONF_MAX_UPDATES_PER_RUN,
@@ -35,8 +34,8 @@ from .const import (
     DEFAULT_CHECK_INTERVAL_MINUTES,
     DEFAULT_CREATE_BACKUP,
     DEFAULT_ENABLED,
-    DEFAULT_EXCLUDED_ENTITIES,
     DEFAULT_EXCLUDE_PATTERNS,
+    DEFAULT_EXCLUDED_ENTITIES,
     DEFAULT_INCLUDE_PATTERNS,
     DEFAULT_LOG_SIZE,
     DEFAULT_MAX_UPDATES_PER_RUN,

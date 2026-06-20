@@ -1,0 +1,63 @@
+{
+  "title": "PatchPilot",
+  "config": {
+    "step": {
+      "user": {
+        "title": "PatchPilot",
+        "description": "Pilot Home Assistant updates automatically during a maintenance window.",
+        "data": {
+          "enabled": "Enable automatic updates",
+          "check_interval_minutes": "Check interval",
+          "window_start": "Maintenance window start",
+          "window_end": "Maintenance window end",
+          "include_patterns": "Include entity patterns",
+          "exclude_patterns": "Exclude entity patterns",
+          "excluded_entities": "Excluded update entities",
+          "create_backup": "Create backups when supported",
+          "max_updates_per_run": "Maximum updates per run",
+          "run_on_state_change": "Run when updates appear",
+          "notify_on_failure": "Notify on failure",
+          "log_size": "Run history size"
+        }
+      }
+    },
+    "error": {
+      "invalid_time": "Use HH:MM or HH:MM:SS.",
+      "empty_include_patterns": "At least one include pattern is required."
+    },
+    "abort": {
+      "already_configured": "PatchPilot is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "PatchPilot options",
+        "data": {
+          "enabled": "Enable automatic updates",
+          "check_interval_minutes": "Check interval",
+          "window_start": "Maintenance window start",
+          "window_end": "Maintenance window end",
+          "include_patterns": "Include entity patterns",
+          "exclude_patterns": "Exclude entity patterns",
+          "excluded_entities": "Excluded update entities",
+          "create_backup": "Create backups when supported",
+          "max_updates_per_run": "Maximum updates per run",
+          "run_on_state_change": "Run when updates appear",
+          "notify_on_failure": "Notify on failure",
+          "log_size": "Run history size"
+        }
+      }
+    },
+    "error": {
+      "invalid_time": "Use HH:MM or HH:MM:SS.",
+      "empty_include_patterns": "At least one include pattern is required."
+    }
+  },
+  "issues": {
+    "last_run_failed": {
+      "title": "PatchPilot failed to install updates",
+      "description": "{count} update entity or entities failed during the last update run: {entities}. Check the Home Assistant log for details."
+    }
+  }
+}

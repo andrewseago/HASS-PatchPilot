@@ -73,7 +73,9 @@ class UpdateLogicTests(unittest.TestCase):
             [],
             install_feature,
         )
-        self.assertEqual([candidate.entity_id for candidate in selected], ["update.core"])
+        self.assertEqual(
+            [candidate.entity_id for candidate in selected], ["update.core"]
+        )
 
     def test_select_respects_exact_exclusions(self) -> None:
         install_feature = 1
@@ -88,7 +90,9 @@ class UpdateLogicTests(unittest.TestCase):
             ["update.hacs"],
             install_feature,
         )
-        self.assertEqual([candidate.entity_id for candidate in selected], ["update.core"])
+        self.assertEqual(
+            [candidate.entity_id for candidate in selected], ["update.core"]
+        )
 
     def test_summary_separates_pending_from_installable_updates(self) -> None:
         install_feature = 1

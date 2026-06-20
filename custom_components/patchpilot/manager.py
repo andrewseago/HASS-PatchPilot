@@ -24,8 +24,8 @@ from .const import (
     CONF_CHECK_INTERVAL_MINUTES,
     CONF_CREATE_BACKUP,
     CONF_ENABLED,
-    CONF_EXCLUDED_ENTITIES,
     CONF_EXCLUDE_PATTERNS,
+    CONF_EXCLUDED_ENTITIES,
     CONF_INCLUDE_PATTERNS,
     CONF_LOG_SIZE,
     CONF_MAX_UPDATES_PER_RUN,
@@ -36,8 +36,8 @@ from .const import (
     DEFAULT_CHECK_INTERVAL_MINUTES,
     DEFAULT_CREATE_BACKUP,
     DEFAULT_ENABLED,
-    DEFAULT_EXCLUDED_ENTITIES,
     DEFAULT_EXCLUDE_PATTERNS,
+    DEFAULT_EXCLUDED_ENTITIES,
     DEFAULT_INCLUDE_PATTERNS,
     DEFAULT_LOG_SIZE,
     DEFAULT_MAX_UPDATES_PER_RUN,
@@ -141,7 +141,9 @@ class PatchPilotManager:
         )
         if self.options.get(CONF_RUN_ON_STATE_CHANGE, DEFAULT_RUN_ON_STATE_CHANGE):
             self._unsubs.append(
-                self.hass.bus.async_listen(EVENT_STATE_CHANGED, self._async_state_changed)
+                self.hass.bus.async_listen(
+                    EVENT_STATE_CHANGED, self._async_state_changed
+                )
             )
         await self.async_scan()
 
@@ -215,8 +217,11 @@ class PatchPilotManager:
             for candidate in candidates:
                 try:
                     await self._async_install(candidate)
-                except Exception as err:  # noqa: BLE001 - keep installing other entities.
-                    _LOGGER.exception("Failed installing update for %s", candidate.entity_id)
+                except Exception as err:
+                    # Keep installing remaining update entities if one fails.
+                    _LOGGER.exception(
+                        "Failed installing update for %s", candidate.entity_id
+                    )
                     result.failed[candidate.entity_id] = str(err)
                 else:
                     result.installed.append(candidate.entity_id)
@@ -238,7 +243,9 @@ class PatchPilotManager:
     def _async_state_changed(self, event: Event) -> None:
         """Run when a selected update entity becomes pending."""
         entity_id = event.data.get("entity_id")
-        if not isinstance(entity_id, str) or not entity_id.startswith(f"{UPDATE_DOMAIN}."):
+        if not isinstance(entity_id, str) or not entity_id.startswith(
+            f"{UPDATE_DOMAIN}."
+        ):
             return
         new_state = event.data.get("new_state")
         if not isinstance(new_state, State) or new_state.state != "on":
@@ -268,7 +275,9 @@ class PatchPilotManager:
 
     def _inside_window(self) -> bool:
         """Return true when current local time is in the maintenance window."""
-        start = parse_time(str(self.options.get(CONF_WINDOW_START, DEFAULT_WINDOW_START)))
+        start = parse_time(
+            str(self.options.get(CONF_WINDOW_START, DEFAULT_WINDOW_START))
+        )
         end = parse_time(str(self.options.get(CONF_WINDOW_END, DEFAULT_WINDOW_END)))
         return is_time_in_window(dt_util.now().time(), start, end)
 
@@ -297,7 +306,9 @@ class PatchPilotManager:
             self.exclude_patterns,
             self.excluded_entities,
             int(UpdateEntityFeature.INSTALL),
-            int(self.options.get(CONF_MAX_UPDATES_PER_RUN, DEFAULT_MAX_UPDATES_PER_RUN)),
+            int(
+                self.options.get(CONF_MAX_UPDATES_PER_RUN, DEFAULT_MAX_UPDATES_PER_RUN)
+            ),
         )
 
     def _update_candidates(
@@ -313,7 +324,9 @@ class PatchPilotManager:
                 UpdateCandidate(
                     entity_id=state.entity_id,
                     state=state.state,
-                    supported_features=int(state.attributes.get("supported_features", 0)),
+                    supported_features=int(
+                        state.attributes.get("supported_features", 0)
+                    ),
                     attributes=state.attributes,
                 )
             )
@@ -379,7 +392,9 @@ class PatchPilotManager:
             PERSISTENT_NOTIFICATION_DOMAIN, PERSISTENT_NOTIFICATION_CREATE
         ):
             return
-        entities = "\n".join(f"- `{entity_id}`: {error}" for entity_id, error in result.failed.items())
+        entities = "\n".join(
+            f"- `{entity_id}`: {error}" for entity_id, error in result.failed.items()
+        )
         await self.hass.services.async_call(
             PERSISTENT_NOTIFICATION_DOMAIN,
             PERSISTENT_NOTIFICATION_CREATE,
@@ -395,7 +410,9 @@ class PatchPilotManager:
         """Append one compact run-history entry."""
         entry = {
             "started_at": result.started_at.isoformat(),
-            "finished_at": result.finished_at.isoformat() if result.finished_at else None,
+            "finished_at": (
+                result.finished_at.isoformat() if result.finished_at else None
+            ),
             "reason": result.reason,
             "dry_run": result.dry_run,
             "skipped_reason": result.skipped_reason,

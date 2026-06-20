@@ -1,0 +1,2 @@
+# Runtime Python dependencies for local development.
+# Home Assistant installs integration requirements from manifest.json.

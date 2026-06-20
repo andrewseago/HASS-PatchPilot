@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import time
 from fnmatch import fnmatchcase
-from typing import Iterable, Mapping
 
 STATE_PENDING = "on"
 

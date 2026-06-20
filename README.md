@@ -73,3 +73,9 @@ pytest -q
 
 The current tests cover the pure update-selection helpers and repository
 structure. Full Home Assistant runtime tests are not included yet.
+
+## Versioning
+
+PatchPilot uses SemVer. Keep `custom_components/patchpilot/manifest.json`,
+`pyproject.toml`, and `CHANGELOG.md` on the same version. GitHub release tags
+should use `vX.Y.Z`.
