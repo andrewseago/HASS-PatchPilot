@@ -9,7 +9,7 @@ import tomllib
 PROJECT_DOMAIN = "patchpilot"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_DIR = PROJECT_ROOT / "custom_components" / PROJECT_DOMAIN
-EXPECTED_VERSION = "0.3.5"
+EXPECTED_VERSION = "0.3.6"
 EXPECTED_HACS_VERSION = "2.0.0"
 EXPECTED_HOME_ASSISTANT_VERSION = "2026.6.0"
 
@@ -184,3 +184,42 @@ def test_manager_lists_skipped_updates_after_runs() -> None:
     assert '"filtered": result.filtered' in manager_source
     assert '"uninstallable": result.uninstallable' in manager_source
     assert '"skipped": result.filtered + result.uninstallable' in sensor_source
+
+
+def test_manager_debounces_update_state_change_runs() -> None:
+    """Update-state bursts should schedule one delayed run, not one run per event."""
+    manager_source = (INTEGRATION_DIR / "manager.py").read_text()
+
+    assert "STATE_CHANGE_DEBOUNCE_SECONDS = 5" in manager_source
+    assert "self._state_change_task: asyncio.Task[None] | None = None" in manager_source
+    assert "async def _async_run_after_state_change_delay" in manager_source
+    assert "await asyncio.sleep(STATE_CHANGE_DEBOUNCE_SECONDS)" in manager_source
+    assert "if self._state_change_task is not None" in manager_source
+    assert "and not self._state_change_task.done()" in manager_source
+    assert "self._state_change_task.cancel()" in manager_source
+
+
+def test_manager_finishes_runs_when_post_run_refresh_fails() -> None:
+    """A post-install scan failure should be retained on the completed run."""
+    manager_source = (INTEGRATION_DIR / "manager.py").read_text()
+    sensor_source = (INTEGRATION_DIR / "sensor.py").read_text()
+
+    assert "scan_failed: str | None = None" in manager_source
+    assert "async def _async_refresh_after_run" in manager_source
+    assert "result.scan_failed = str(err)" in manager_source
+    assert 'failed", result.reason' in manager_source
+    assert '"scan_failed": result.scan_failed' in manager_source
+    assert '"scan_failed": result.scan_failed' in sensor_source
+
+
+def test_manager_notifications_are_best_effort() -> None:
+    """Persistent-notification failures should not abort update runs."""
+    manager_source = (INTEGRATION_DIR / "manager.py").read_text()
+
+    assert "async def _async_update_notifications" in manager_source
+    assert "await self._async_update_notifications(result)" in manager_source
+    assert "Failed updating PatchPilot notifications after %s run" in manager_source
+    assert "await self._async_notify_failure(result)" in manager_source
+    assert "await self._async_notify_restart_required(result)" in manager_source
+    assert "await self._async_notify_skipped_updates(result)" in manager_source
+    assert "await self._async_clear_skipped_updates_notification()" in manager_source

@@ -64,6 +64,7 @@ SERVICE_UPDATE_ENTITY = "update_entity"
 PERSISTENT_NOTIFICATION_DOMAIN = "persistent_notification"
 PERSISTENT_NOTIFICATION_CREATE = "create"
 PERSISTENT_NOTIFICATION_DISMISS = "dismiss"
+STATE_CHANGE_DEBOUNCE_SECONDS = 5
 
 
 @dataclass(slots=True)
@@ -80,6 +81,7 @@ class UpdateRunResult:
     failed: dict[str, str] = field(default_factory=dict)
     filtered: list[str] = field(default_factory=list)
     uninstallable: list[str] = field(default_factory=list)
+    scan_failed: str | None = None
 
 
 class PatchPilotManager:
@@ -98,6 +100,7 @@ class PatchPilotManager:
         self.last_filtered: list[str] = []
         self.last_uninstallable: list[str] = []
         self.history: list[dict[str, Any]] = []
+        self._state_change_task: asyncio.Task[None] | None = None
 
     @property
     def options(self) -> dict[str, Any]:
@@ -148,12 +151,22 @@ class PatchPilotManager:
                     EVENT_STATE_CHANGED, self._async_state_changed
                 )
             )
-        await self.async_scan()
+        try:
+            await self.async_scan()
+        except Exception:
+            _LOGGER.exception(
+                "Failed refreshing update entities during PatchPilot startup"
+            )
+            self._refresh_selection_state()
+            self._notify_listeners()
 
     async def async_stop(self) -> None:
         """Stop scheduled checks and listeners."""
         while self._unsubs:
             self._unsubs.pop()()
+        if self._state_change_task is not None:
+            self._state_change_task.cancel()
+            self._state_change_task = None
         self._listeners.clear()
 
     @callback
@@ -236,19 +249,11 @@ class PatchPilotManager:
 
             if result.failed:
                 self._create_failure_issue(result)
-                await self._async_notify_failure(result)
             else:
                 ir.async_delete_issue(self.hass, DOMAIN, self._failure_issue_id)
 
-            if result.installed:
-                await self._async_notify_restart_required(result)
-
-            if result.filtered or result.uninstallable:
-                await self._async_notify_skipped_updates(result)
-            else:
-                await self._async_clear_skipped_updates_notification()
-
-            await self.async_scan()
+            await self._async_update_notifications(result)
+            await self._async_refresh_after_run(result)
             return self._finish(result)
 
     async def _async_interval(self, _now: datetime) -> None:
@@ -266,7 +271,52 @@ class PatchPilotManager:
         new_state = event.data.get("new_state")
         if not isinstance(new_state, State) or new_state.state != "on":
             return
-        self.hass.async_create_task(self.async_run(reason="state_changed"))
+        if self._state_change_task is not None and not self._state_change_task.done():
+            return
+        self._state_change_task = self.hass.async_create_task(
+            self._async_run_after_state_change_delay()
+        )
+
+    async def _async_run_after_state_change_delay(self) -> None:
+        """Run after update state changes settle."""
+        try:
+            await asyncio.sleep(STATE_CHANGE_DEBOUNCE_SECONDS)
+            await self.async_run(reason="state_changed")
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            _LOGGER.exception("Failed running PatchPilot after update state change")
+        finally:
+            self._state_change_task = None
+
+    async def _async_update_notifications(self, result: UpdateRunResult) -> None:
+        """Update persistent notifications without aborting an update run."""
+        try:
+            if result.failed:
+                await self._async_notify_failure(result)
+
+            if result.installed:
+                await self._async_notify_restart_required(result)
+
+            if result.filtered or result.uninstallable:
+                await self._async_notify_skipped_updates(result)
+            else:
+                await self._async_clear_skipped_updates_notification()
+        except Exception:
+            _LOGGER.exception(
+                "Failed updating PatchPilot notifications after %s run",
+                result.reason,
+            )
+
+    async def _async_refresh_after_run(self, result: UpdateRunResult) -> None:
+        """Refresh update entities after a run without losing the run result."""
+        try:
+            await self.async_scan()
+        except Exception as err:
+            _LOGGER.exception("PatchPilot scan after %s run failed", result.reason)
+            result.scan_failed = str(err)
+            self._refresh_selection_state()
+            self._notify_listeners()
 
     def _finish(self, result: UpdateRunResult) -> UpdateRunResult:
         """Persist and notify a run result."""
@@ -509,6 +559,7 @@ class PatchPilotManager:
             "filtered": result.filtered,
             "uninstallable": result.uninstallable,
             "skipped": result.filtered + result.uninstallable,
+            "scan_failed": result.scan_failed,
         }
         self.history.insert(0, entry)
         max_size = int(self.options.get(CONF_LOG_SIZE, DEFAULT_LOG_SIZE))

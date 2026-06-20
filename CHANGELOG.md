@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.3.6 - 2026-06-20
+
+- Debounce update-state-change triggers so bursts of update entity changes create
+  one delayed PatchPilot run instead of redundant serialized runs.
+- Keep update run history and last-run attributes even when a post-run entity
+  refresh fails.
+- Treat persistent notification failures as best effort so notification service
+  issues do not abort update run completion.
+- Expose post-run scan failures through last-run attributes and run history.
+
 ## 0.3.5 - 2026-06-20
 
 - Add a PatchPilot device configuration URL that opens the integration

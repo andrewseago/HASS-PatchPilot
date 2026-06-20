@@ -17,6 +17,9 @@ and other integrations that expose installable `update` entities.
 - Supports include and exclude patterns plus exact entity exclusions.
 - Provides services for manual runs, dry runs, scans, and exclusion management.
 - Creates a repair issue and optional persistent notification when installs fail.
+- Creates a persistent notification after installed updates requesting a Home
+  Assistant restart.
+- Lists pending updates that PatchPilot will not install, grouped by reason.
 - Exposes diagnostic sensors for raw pending updates, installable updates,
   skipped updates, last run, install count, failure count, and retained run
   history.
@@ -50,6 +53,39 @@ groups the diagnostic sensors with these direct controls:
 - `Run updates now` button
 
 The buttons use the same manager logic as the services below.
+
+## Configuration
+
+Open **Settings > Devices & services > PatchPilot > Configure** to change:
+
+- Automatic updates enabled/disabled.
+- Check interval in minutes.
+- Maintenance window start and end times.
+- Include and exclude entity patterns.
+- Exact excluded `update` entities.
+- Backup requests when supported by the update entity.
+- Maximum updates per run, where `0` means no limit.
+- Whether newly pending updates trigger an automatic run.
+- Failure notifications.
+- Retained run-history size.
+
+PatchPilot stores exact exclusions in the integration options. The
+`patchpilot.exclude_entities` and `patchpilot.include_entities` services update
+that same setting.
+
+## Status
+
+The integration exposes diagnostic entities on one PatchPilot device:
+
+- `Pending updates`: every pending `update` entity matching the include/exclude
+  configuration.
+- `Installable updates`: pending entities that expose Home Assistant's install
+  feature.
+- `Skipped updates`: pending entities PatchPilot will not install, either
+  because configuration filtered them or Home Assistant cannot install them.
+- `Last run`: the latest run result, including considered, installed, failed,
+  skipped, and post-run scan failure details.
+- `Run history`: compact retained run results.
 
 ## Services
 
