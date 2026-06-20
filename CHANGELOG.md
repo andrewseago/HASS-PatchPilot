@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.4 - 2026-06-20
+
+- List skipped pending updates by reason in PatchPilot run history, last-run
+  attributes, and persistent notifications.
+
 ## 0.3.3 - 2026-06-20
 
 - Add a persistent notification requesting a Home Assistant restart after

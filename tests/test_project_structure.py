@@ -9,7 +9,7 @@ import tomllib
 PROJECT_DOMAIN = "patchpilot"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_DIR = PROJECT_ROOT / "custom_components" / PROJECT_DOMAIN
-EXPECTED_VERSION = "0.3.3"
+EXPECTED_VERSION = "0.3.4"
 EXPECTED_HACS_VERSION = "2.0.0"
 EXPECTED_HOME_ASSISTANT_VERSION = "2026.6.0"
 
@@ -160,3 +160,23 @@ def test_manager_notifies_restart_after_installed_updates() -> None:
     assert "await self._async_notify_restart_required(result)" in manager_source
     assert '"title": "PatchPilot restart required"' in manager_source
     assert "_restart_required" in manager_source
+
+
+def test_manager_lists_skipped_updates_after_runs() -> None:
+    """PatchPilot should list skipped pending updates and why they were skipped."""
+    manager_source = (INTEGRATION_DIR / "manager.py").read_text()
+    sensor_source = (INTEGRATION_DIR / "sensor.py").read_text()
+
+    assert "filtered: list[str]" in manager_source
+    assert "uninstallable: list[str]" in manager_source
+    assert "result.filtered = [" in manager_source
+    assert "result.uninstallable = [" in manager_source
+    assert "await self._async_notify_skipped_updates(result)" in manager_source
+    assert "async def _async_notify_skipped_updates" in manager_source
+    assert "Filtered by PatchPilot configuration" in manager_source
+    assert "Pending but not installable through Home Assistant" in manager_source
+    assert "await self._async_clear_skipped_updates_notification()" in manager_source
+    assert '"skipped": result.filtered + result.uninstallable' in manager_source
+    assert '"filtered": result.filtered' in manager_source
+    assert '"uninstallable": result.uninstallable' in manager_source
+    assert '"skipped": result.filtered + result.uninstallable' in sensor_source

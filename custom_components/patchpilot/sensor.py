@@ -146,6 +146,9 @@ class LastRunSensor(PatchPilotSensor):
             "considered": result.considered,
             "installed": result.installed,
             "failed": result.failed,
+            "filtered": result.filtered,
+            "uninstallable": result.uninstallable,
+            "skipped": result.filtered + result.uninstallable,
         }
 
 

@@ -63,6 +63,7 @@ HOMEASSISTANT_DOMAIN = "homeassistant"
 SERVICE_UPDATE_ENTITY = "update_entity"
 PERSISTENT_NOTIFICATION_DOMAIN = "persistent_notification"
 PERSISTENT_NOTIFICATION_CREATE = "create"
+PERSISTENT_NOTIFICATION_DISMISS = "dismiss"
 
 
 @dataclass(slots=True)
@@ -77,6 +78,8 @@ class UpdateRunResult:
     considered: list[str] = field(default_factory=list)
     installed: list[str] = field(default_factory=list)
     failed: dict[str, str] = field(default_factory=dict)
+    filtered: list[str] = field(default_factory=list)
+    uninstallable: list[str] = field(default_factory=list)
 
 
 class PatchPilotManager:
@@ -208,8 +211,13 @@ class PatchPilotManager:
                 result.skipped_reason = "outside_window"
                 return self._finish(result)
 
-            candidates = self._pending_candidates(entity_ids)
-            result.considered = [candidate.entity_id for candidate in candidates]
+            summary = self._selection_summary(entity_ids)
+            candidates = summary.installable
+            result.considered = [candidate.entity_id for candidate in summary.pending]
+            result.filtered = [candidate.entity_id for candidate in summary.filtered]
+            result.uninstallable = [
+                candidate.entity_id for candidate in summary.uninstallable
+            ]
 
             if dry_run:
                 return self._finish(result)
@@ -234,6 +242,11 @@ class PatchPilotManager:
 
             if result.installed:
                 await self._async_notify_restart_required(result)
+
+            if result.filtered or result.uninstallable:
+                await self._async_notify_skipped_updates(result)
+            else:
+                await self._async_clear_skipped_updates_notification()
 
             await self.async_scan()
             return self._finish(result)
@@ -416,6 +429,41 @@ class PatchPilotManager:
             blocking=False,
         )
 
+    async def _async_notify_skipped_updates(self, result: UpdateRunResult) -> None:
+        """Create a persistent notification listing skipped pending updates."""
+        if not self.hass.services.has_service(
+            PERSISTENT_NOTIFICATION_DOMAIN, PERSISTENT_NOTIFICATION_CREATE
+        ):
+            return
+        await self.hass.services.async_call(
+            PERSISTENT_NOTIFICATION_DOMAIN,
+            PERSISTENT_NOTIFICATION_CREATE,
+            {
+                "title": "PatchPilot skipped updates",
+                "message": (
+                    "PatchPilot will not install these pending updates:\n\n"
+                    f"{_format_skipped_update_sections(result)}"
+                ),
+                "notification_id": f"{DOMAIN}_{self.entry.entry_id}_skipped_updates",
+            },
+            blocking=False,
+        )
+
+    async def _async_clear_skipped_updates_notification(self) -> None:
+        """Dismiss the skipped-updates notification when no updates are skipped."""
+        if not self.hass.services.has_service(
+            PERSISTENT_NOTIFICATION_DOMAIN, PERSISTENT_NOTIFICATION_DISMISS
+        ):
+            return
+        await self.hass.services.async_call(
+            PERSISTENT_NOTIFICATION_DOMAIN,
+            PERSISTENT_NOTIFICATION_DISMISS,
+            {
+                "notification_id": f"{DOMAIN}_{self.entry.entry_id}_skipped_updates",
+            },
+            blocking=False,
+        )
+
     async def _async_notify_restart_required(self, result: UpdateRunResult) -> None:
         """Create a persistent notification requesting a Home Assistant restart."""
         if not self.hass.services.has_service(
@@ -423,6 +471,12 @@ class PatchPilotManager:
         ):
             return
         entities = "\n".join(f"- `{entity_id}`" for entity_id in result.installed)
+        skipped = _format_skipped_update_sections(result)
+        skipped_message = (
+            "\n\nPatchPilot did not install these pending updates:\n\n" + skipped
+            if skipped
+            else ""
+        )
         await self.hass.services.async_call(
             PERSISTENT_NOTIFICATION_DOMAIN,
             PERSISTENT_NOTIFICATION_CREATE,
@@ -432,6 +486,7 @@ class PatchPilotManager:
                     "PatchPilot finished installing updates for:\n\n"
                     f"{entities}\n\n"
                     "Restart Home Assistant to finish applying the updates."
+                    f"{skipped_message}"
                 ),
                 "notification_id": f"{DOMAIN}_{self.entry.entry_id}_restart_required",
             },
@@ -451,6 +506,9 @@ class PatchPilotManager:
             "considered": result.considered,
             "installed": result.installed,
             "failed": result.failed,
+            "filtered": result.filtered,
+            "uninstallable": result.uninstallable,
+            "skipped": result.filtered + result.uninstallable,
         }
         self.history.insert(0, entry)
         max_size = int(self.options.get(CONF_LOG_SIZE, DEFAULT_LOG_SIZE))
@@ -477,3 +535,24 @@ def _normalize_patterns(value: Any) -> list[str]:
     if isinstance(value, str):
         return [line.strip() for line in value.splitlines() if line.strip()]
     return [str(item).strip() for item in value if str(item).strip()]
+
+
+def _format_entity_list(entity_ids: Iterable[str]) -> str:
+    """Format entity ids for a Home Assistant persistent notification."""
+    return "\n".join(f"- `{entity_id}`" for entity_id in entity_ids)
+
+
+def _format_skipped_update_sections(result: UpdateRunResult) -> str:
+    """Format skipped update entity ids by skip reason."""
+    sections: list[str] = []
+    if result.filtered:
+        sections.append(
+            "Filtered by PatchPilot configuration:\n"
+            f"{_format_entity_list(result.filtered)}"
+        )
+    if result.uninstallable:
+        sections.append(
+            "Pending but not installable through Home Assistant:\n"
+            f"{_format_entity_list(result.uninstallable)}"
+        )
+    return "\n\n".join(sections)
