@@ -159,6 +159,7 @@ def test_manager_only_requests_restart_for_ha_runtime_updates() -> None:
     """PatchPilot should not ask for an HA restart after external updates."""
     manager_source = (INTEGRATION_DIR / "manager.py").read_text()
     update_logic_source = (INTEGRATION_DIR / "update_logic.py").read_text()
+    presentation_source = (INTEGRATION_DIR / "presentation.py").read_text()
 
     assert "requires_home_assistant_restart" in update_logic_source
     assert 'HA_RESTART_UPDATE_PLATFORMS = frozenset({"hacs"})' in update_logic_source
@@ -174,8 +175,9 @@ def test_manager_only_requests_restart_for_ha_runtime_updates() -> None:
     assert "await self._async_notify_updates_installed(result)" in manager_source
     assert "entity_registry.async_get(self.hass)" in manager_source
     assert '"restart_required": result.restart_required' in manager_source
-    assert '"title": "PatchPilot restart required"' in manager_source
-    assert '"title": "PatchPilot updates installed"' in manager_source
+    # Notification title text moved to presentation.py.
+    assert '"PatchPilot restart required"' in presentation_source
+    assert '"PatchPilot updates installed"' in presentation_source
     assert "_restart_required" in manager_source
 
 
@@ -183,6 +185,7 @@ def test_manager_lists_skipped_updates_after_runs() -> None:
     """PatchPilot should list skipped pending updates and why they were skipped."""
     manager_source = (INTEGRATION_DIR / "manager.py").read_text()
     sensor_source = (INTEGRATION_DIR / "sensor.py").read_text()
+    presentation_source = (INTEGRATION_DIR / "presentation.py").read_text()
 
     assert "filtered: list[str]" in manager_source
     assert "uninstallable: list[str]" in manager_source
@@ -190,8 +193,9 @@ def test_manager_lists_skipped_updates_after_runs() -> None:
     assert "result.uninstallable = [" in manager_source
     assert "await self._async_notify_skipped_updates(result)" in manager_source
     assert "async def _async_notify_skipped_updates" in manager_source
-    assert "Filtered by PatchPilot configuration" in manager_source
-    assert "Pending but not installable through Home Assistant" in manager_source
+    # Skipped-section labels moved to presentation.py.
+    assert "Filtered by PatchPilot configuration" in presentation_source
+    assert "Pending but not installable through Home Assistant" in presentation_source
     assert "await self._async_clear_skipped_updates_notification()" in manager_source
     assert '"skipped": result.filtered + result.uninstallable' in manager_source
     assert '"filtered": result.filtered' in manager_source
