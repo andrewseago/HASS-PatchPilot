@@ -292,3 +292,22 @@ def test_manager_exposes_repair_retry_entry_point() -> None:
     assert "select_retry_entities" in manager_source
     assert "is_fixable=True" in manager_source
     assert 'data={"entry_id": self.entry.entry_id}' in manager_source
+
+
+def test_failed_run_repair_offers_fixable_menu() -> None:
+    """The failed-run repair issue should expose a fixable retry/dismiss flow."""
+    repairs_path = INTEGRATION_DIR / "repairs.py"
+    assert repairs_path.is_file()
+
+    repairs_source = repairs_path.read_text()
+    assert "async def async_create_fix_flow" in repairs_source
+    assert "RepairsFlow" in repairs_source
+    assert "async_show_menu" in repairs_source
+    assert "async_retry_failed" in repairs_source
+
+    strings = json.loads((INTEGRATION_DIR / "strings.json").read_text())
+    last_run_failed = strings["issues"]["last_run_failed"]
+    assert "fix_flow" in last_run_failed
+    assert "description" not in last_run_failed
+    menu_options = last_run_failed["fix_flow"]["step"]["init"]["menu_options"]
+    assert set(menu_options) == {"retry", "dismiss"}
