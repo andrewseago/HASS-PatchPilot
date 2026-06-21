@@ -149,6 +149,7 @@ class LastRunSensor(PatchPilotSensor):
             "filtered": result.filtered,
             "uninstallable": result.uninstallable,
             "skipped": result.filtered + result.uninstallable,
+            "restart_required": result.restart_required,
             "scan_failed": result.scan_failed,
         }
 

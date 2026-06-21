@@ -17,8 +17,10 @@ and other integrations that expose installable `update` entities.
 - Supports include and exclude patterns plus exact entity exclusions.
 - Provides services for manual runs, dry runs, scans, and exclusion management.
 - Creates a repair issue and optional persistent notification when installs fail.
-- Creates a persistent notification after installed updates requesting a Home
-  Assistant restart.
+- Requests a Home Assistant restart only for installed updates that affect the
+  Home Assistant runtime, such as HACS-managed updates and Home Assistant Core.
+- Sends a non-restart completion notification for external device or service
+  updates.
 - Lists pending updates that PatchPilot will not install, grouped by reason.
 - Exposes diagnostic sensors for raw pending updates, installable updates,
   skipped updates, last run, install count, failure count, and retained run
@@ -85,7 +87,7 @@ The integration exposes diagnostic entities on one PatchPilot device:
 - `Skipped updates`: pending entities PatchPilot will not install, either
   because configuration filtered them or Home Assistant cannot install them.
 - `Last run`: the latest run result, including considered, installed, failed,
-  skipped, and post-run scan failure details.
+  skipped, restart-required, and post-run scan failure details.
 - `Run history`: compact retained run results.
 
 ## Services

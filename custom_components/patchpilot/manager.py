@@ -13,7 +13,7 @@ from homeassistant.components.update import UpdateEntityFeature
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import EVENT_STATE_CHANGED
 from homeassistant.core import Event, HomeAssistant, State, callback
-from homeassistant.helpers import issue_registry as ir
+from homeassistant.helpers import entity_registry, issue_registry as ir
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.util import dt as dt_util
 
@@ -52,6 +52,7 @@ from .update_logic import (
     UpdateSelectionSummary,
     is_time_in_window,
     parse_time,
+    requires_home_assistant_restart,
     summarize_update_candidates,
 )
 
@@ -81,6 +82,7 @@ class UpdateRunResult:
     failed: dict[str, str] = field(default_factory=dict)
     filtered: list[str] = field(default_factory=list)
     uninstallable: list[str] = field(default_factory=list)
+    restart_required: list[str] = field(default_factory=list)
     scan_failed: str | None = None
 
 
@@ -252,6 +254,9 @@ class PatchPilotManager:
             else:
                 ir.async_delete_issue(self.hass, DOMAIN, self._failure_issue_id)
 
+            result.restart_required = self._home_assistant_restart_required_entities(
+                result.installed
+            )
             await self._async_update_notifications(result)
             await self._async_refresh_after_run(result)
             return self._finish(result)
@@ -297,8 +302,10 @@ class PatchPilotManager:
             if result.failed:
                 await self._async_notify_failure(result)
 
-            if result.installed:
+            if result.restart_required:
                 await self._async_notify_restart_required(result)
+            elif result.installed:
+                await self._async_notify_updates_installed(result)
 
             if result.filtered or result.uninstallable:
                 await self._async_notify_skipped_updates(result)
@@ -319,6 +326,19 @@ class PatchPilotManager:
             result.scan_failed = str(err)
             self._refresh_selection_state()
             self._notify_listeners()
+
+    def _home_assistant_restart_required_entities(
+        self, entity_ids: Iterable[str]
+    ) -> list[str]:
+        """Return installed update entities that should trigger an HA restart."""
+        registry = entity_registry.async_get(self.hass)
+        restart_required: list[str] = []
+        for entity_id in entity_ids:
+            entity_entry = registry.async_get(entity_id)
+            platform = entity_entry.platform if entity_entry else None
+            if requires_home_assistant_restart(entity_id, platform):
+                restart_required.append(entity_id)
+        return restart_required
 
     def _finish(self, result: UpdateRunResult) -> UpdateRunResult:
         """Persist and notify a run result."""
@@ -523,6 +543,9 @@ class PatchPilotManager:
         ):
             return
         entities = "\n".join(f"- `{entity_id}`" for entity_id in result.installed)
+        restart_entities = "\n".join(
+            f"- `{entity_id}`" for entity_id in result.restart_required
+        )
         skipped = _format_skipped_update_sections(result)
         skipped_message = (
             "\n\nPatchPilot did not install these pending updates:\n\n" + skipped
@@ -537,7 +560,38 @@ class PatchPilotManager:
                 "message": (
                     "PatchPilot finished installing updates for:\n\n"
                     f"{entities}\n\n"
-                    "Restart Home Assistant to finish applying the updates."
+                    "Restart Home Assistant to finish applying these updates:\n\n"
+                    f"{restart_entities}"
+                    f"{skipped_message}"
+                ),
+                "notification_id": f"{DOMAIN}_{self.entry.entry_id}_restart_required",
+            },
+            blocking=False,
+        )
+
+    async def _async_notify_updates_installed(self, result: UpdateRunResult) -> None:
+        """Create a persistent notification after non-HA-runtime updates install."""
+        if not self.hass.services.has_service(
+            PERSISTENT_NOTIFICATION_DOMAIN, PERSISTENT_NOTIFICATION_CREATE
+        ):
+            return
+        entities = "\n".join(f"- `{entity_id}`" for entity_id in result.installed)
+        skipped = _format_skipped_update_sections(result)
+        skipped_message = (
+            "\n\nPatchPilot did not install these pending updates:\n\n" + skipped
+            if skipped
+            else ""
+        )
+        await self.hass.services.async_call(
+            PERSISTENT_NOTIFICATION_DOMAIN,
+            PERSISTENT_NOTIFICATION_CREATE,
+            {
+                "title": "PatchPilot updates installed",
+                "message": (
+                    "PatchPilot finished installing updates for:\n\n"
+                    f"{entities}\n\n"
+                    "PatchPilot did not detect a Home Assistant restart requirement "
+                    "for these update entities."
                     f"{skipped_message}"
                 ),
                 "notification_id": f"{DOMAIN}_{self.entry.entry_id}_restart_required",
@@ -561,6 +615,7 @@ class PatchPilotManager:
             "filtered": result.filtered,
             "uninstallable": result.uninstallable,
             "skipped": result.filtered + result.uninstallable,
+            "restart_required": result.restart_required,
             "scan_failed": result.scan_failed,
         }
         self.history.insert(0, entry)

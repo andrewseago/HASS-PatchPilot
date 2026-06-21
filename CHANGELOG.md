@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.8 - 2026-06-20
+
+- Only request a Home Assistant restart for installed updates that affect the
+  Home Assistant runtime, such as HACS-managed updates and Home Assistant Core.
+- Send a non-restart completion notification for external device or service
+  updates, such as OPNsense firmware, while still listing skipped updates.
+- Expose restart-required installed entities in last-run attributes and retained
+  run history.
+
 ## 0.3.7 - 2026-06-20
 
 - Make state-change-triggered automatic runs respect the enabled setting and

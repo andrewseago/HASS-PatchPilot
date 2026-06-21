@@ -8,6 +8,8 @@ from datetime import time
 from fnmatch import fnmatchcase
 
 STATE_PENDING = "on"
+HA_RESTART_UPDATE_ENTITY_IDS = frozenset({"update.home_assistant_core_update"})
+HA_RESTART_UPDATE_PLATFORMS = frozenset({"hacs"})
 
 
 @dataclass(frozen=True)
@@ -66,6 +68,14 @@ def is_allowed_entity(
         return False
     return matches_any(entity_id, include_patterns) and not matches_any(
         entity_id, exclude_patterns
+    )
+
+
+def requires_home_assistant_restart(entity_id: str, platform: str | None) -> bool:
+    """Return true when an installed update should prompt for an HA restart."""
+    return (
+        entity_id in HA_RESTART_UPDATE_ENTITY_IDS
+        or platform in HA_RESTART_UPDATE_PLATFORMS
     )
 
 

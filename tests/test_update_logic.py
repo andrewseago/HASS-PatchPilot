@@ -25,6 +25,9 @@ UpdateCandidate = update_logic.UpdateCandidate
 is_allowed_entity = update_logic.is_allowed_entity
 is_time_in_window = update_logic.is_time_in_window
 parse_time = update_logic.parse_time
+requires_home_assistant_restart = getattr(
+    update_logic, "requires_home_assistant_restart", None
+)
 select_pending_updates = update_logic.select_pending_updates
 summarize_update_candidates = update_logic.summarize_update_candidates
 
@@ -127,6 +130,31 @@ class UpdateLogicTests(unittest.TestCase):
         self.assertEqual(
             [candidate.entity_id for candidate in summary.filtered],
             ["update.router"],
+        )
+
+    def test_restart_required_classification_is_conservative(self) -> None:
+        self.assertIsNotNone(requires_home_assistant_restart)
+        assert requires_home_assistant_restart is not None
+
+        self.assertTrue(
+            requires_home_assistant_restart(
+                "update.opnsense_integration_for_home_assistant_update", "hacs"
+            )
+        )
+        self.assertTrue(
+            requires_home_assistant_restart(
+                "update.home_assistant_core_update", "hassio"
+            )
+        )
+        self.assertFalse(
+            requires_home_assistant_restart(
+                "update.opnsense_firmware_updates_available", "opnsense"
+            )
+        )
+        self.assertFalse(
+            requires_home_assistant_restart(
+                "update.pi_hole_web_update_available", "pi_hole"
+            )
         )
 
 

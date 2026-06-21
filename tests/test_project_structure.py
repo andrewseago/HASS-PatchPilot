@@ -9,7 +9,7 @@ import tomllib
 PROJECT_DOMAIN = "patchpilot"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_DIR = PROJECT_ROOT / "custom_components" / PROJECT_DOMAIN
-EXPECTED_VERSION = "0.3.7"
+EXPECTED_VERSION = "0.3.8"
 EXPECTED_HACS_VERSION = "2.0.0"
 EXPECTED_HOME_ASSISTANT_VERSION = "2026.6.0"
 
@@ -155,14 +155,27 @@ def test_config_flow_does_not_block_stale_hidden_entries() -> None:
     assert "already_configured" not in strings_source
 
 
-def test_manager_notifies_restart_after_installed_updates() -> None:
-    """PatchPilot should request an HA restart after installing updates."""
+def test_manager_only_requests_restart_for_ha_runtime_updates() -> None:
+    """PatchPilot should not ask for an HA restart after external updates."""
     manager_source = (INTEGRATION_DIR / "manager.py").read_text()
+    update_logic_source = (INTEGRATION_DIR / "update_logic.py").read_text()
 
+    assert "requires_home_assistant_restart" in update_logic_source
+    assert 'HA_RESTART_UPDATE_PLATFORMS = frozenset({"hacs"})' in update_logic_source
+    assert '"update.home_assistant_core_update"' in update_logic_source
+    assert "restart_required: list[str]" in manager_source
+    assert (
+        "result.restart_required = self._home_assistant_restart_required_entities"
+        in (manager_source)
+    )
+    assert "if result.restart_required:" in manager_source
     assert "async def _async_notify_restart_required" in manager_source
-    assert "if result.installed:" in manager_source
     assert "await self._async_notify_restart_required(result)" in manager_source
+    assert "await self._async_notify_updates_installed(result)" in manager_source
+    assert "entity_registry.async_get(self.hass)" in manager_source
+    assert '"restart_required": result.restart_required' in manager_source
     assert '"title": "PatchPilot restart required"' in manager_source
+    assert '"title": "PatchPilot updates installed"' in manager_source
     assert "_restart_required" in manager_source
 
 
