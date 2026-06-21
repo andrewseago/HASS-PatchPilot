@@ -101,7 +101,7 @@ def test_integration_forwards_ui_control_platforms() -> None:
     const_source = (INTEGRATION_DIR / "const.py").read_text()
     init_source = (INTEGRATION_DIR / "__init__.py").read_text()
 
-    assert 'PLATFORMS = ["button", "sensor", "switch"]' in const_source
+    assert 'PLATFORMS = ["binary_sensor", "button", "sensor", "switch"]' in const_source
     assert "async_forward_entry_setups(entry, PLATFORMS)" in init_source
 
 
