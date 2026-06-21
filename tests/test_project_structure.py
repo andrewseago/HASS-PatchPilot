@@ -47,8 +47,12 @@ def test_repository_has_standard_integration_files() -> None:
         "requirements.txt",
         "requirements_dev.txt",
         "custom_components/__init__.py",
+        "custom_components/patchpilot/binary_sensor.py",
         "custom_components/patchpilot/button.py",
         "custom_components/patchpilot/entity.py",
+        "custom_components/patchpilot/icons.json",
+        "custom_components/patchpilot/presentation.py",
+        "custom_components/patchpilot/repairs.py",
         "custom_components/patchpilot/switch.py",
         "custom_components/patchpilot/translations/en.json",
     )
@@ -311,3 +315,30 @@ def test_failed_run_repair_offers_fixable_menu() -> None:
     assert "description" not in last_run_failed
     menu_options = last_run_failed["fix_flow"]["step"]["init"]["menu_options"]
     assert set(menu_options) == {"retry", "dismiss"}
+
+
+def test_icons_json_is_valid_and_matches_entity_translation_keys() -> None:
+    """icons.json entity keys must mirror the strings.json entity keys."""
+    icons = json.loads((INTEGRATION_DIR / "icons.json").read_text())
+    strings = json.loads((INTEGRATION_DIR / "strings.json").read_text())
+
+    assert isinstance(icons, dict)
+    assert isinstance(icons.get("entity"), dict)
+    assert isinstance(strings.get("entity"), dict)
+
+    def _platform_key_pairs(entity_block: dict) -> set[tuple[str, str]]:
+        pairs: set[tuple[str, str]] = set()
+        for platform, keys in entity_block.items():
+            assert isinstance(keys, dict), platform
+            for key in keys:
+                pairs.add((platform, key))
+        return pairs
+
+    icon_pairs = _platform_key_pairs(icons["entity"])
+    strings_pairs = _platform_key_pairs(strings["entity"])
+
+    assert icon_pairs, "icons.json defines no entity icons"
+    assert icon_pairs == strings_pairs, {
+        "missing_name_in_strings": sorted(icon_pairs - strings_pairs),
+        "missing_icon_in_icons": sorted(strings_pairs - icon_pairs),
+    }
