@@ -132,5 +132,51 @@
       "title": "PatchPilot failed to install updates",
       "description": "{count} update entity or entities failed during the last update run: {entities}. Check the Home Assistant log for details."
     }
+  },
+  "entity": {
+    "sensor": {
+      "pending_updates": {
+        "name": "Pending updates"
+      },
+      "installable_updates": {
+        "name": "Installable updates"
+      },
+      "skipped_updates": {
+        "name": "Skipped updates"
+      },
+      "last_run": {
+        "name": "Last run"
+      },
+      "last_installed_count": {
+        "name": "Last installed count"
+      },
+      "last_failed_count": {
+        "name": "Last failed count"
+      },
+      "run_history": {
+        "name": "Run history"
+      }
+    },
+    "binary_sensor": {
+      "restart_required": {
+        "name": "Restart required"
+      }
+    },
+    "switch": {
+      "automatic_updates": {
+        "name": "Automatic updates"
+      }
+    },
+    "button": {
+      "scan_updates": {
+        "name": "Scan updates"
+      },
+      "dry_run": {
+        "name": "Dry run"
+      },
+      "run_updates_now": {
+        "name": "Run updates now"
+      }
+    }
   }
 }

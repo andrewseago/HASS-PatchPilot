@@ -27,11 +27,10 @@ class PatchPilotSwitch(PatchPilotObservableEntity, SwitchEntity):
     """Switch automatic PatchPilot update runs on or off."""
 
     _attr_entity_category = EntityCategory.CONFIG
-    _attr_icon = "mdi:auto-fix"
 
     def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize switch."""
-        super().__init__(manager, "automatic_updates", "Automatic updates")
+        super().__init__(manager, "automatic_updates")
 
     @property
     def is_on(self) -> bool:
