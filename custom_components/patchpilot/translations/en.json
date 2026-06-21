@@ -5,19 +5,57 @@
       "user": {
         "title": "PatchPilot",
         "description": "Pilot Home Assistant updates automatically during a maintenance window.",
-        "data": {
-          "enabled": "Enable automatic updates",
-          "check_interval_minutes": "Check interval",
-          "window_start": "Maintenance window start",
-          "window_end": "Maintenance window end",
-          "include_patterns": "Include entity patterns",
-          "exclude_patterns": "Exclude entity patterns",
-          "excluded_entities": "Excluded update entities",
-          "create_backup": "Create backups when supported",
-          "max_updates_per_run": "Maximum updates per run",
-          "run_on_state_change": "Run when updates appear",
-          "notify_on_failure": "Notify on failure",
-          "log_size": "Run history size"
+        "sections": {
+          "schedule": {
+            "name": "Schedule",
+            "description": "When PatchPilot checks for and installs updates.",
+            "data": {
+              "enabled": "Enable automatic updates",
+              "check_interval_minutes": "Check interval",
+              "window_start": "Maintenance window start",
+              "window_end": "Maintenance window end"
+            },
+            "data_description": {
+              "window_start": "Updates only install between this time and the window end.",
+              "window_end": "End of the maintenance window."
+            }
+          },
+          "what_to_update": {
+            "name": "What to update",
+            "description": "Choose which update entities PatchPilot manages.",
+            "data": {
+              "include_patterns": "Include entity patterns",
+              "exclude_patterns": "Exclude entity patterns",
+              "excluded_entities": "Excluded update entities"
+            },
+            "data_description": {
+              "include_patterns": "One shell-style glob per line, e.g. update.* or update.router*.",
+              "exclude_patterns": "One shell-style glob per line, e.g. update.* or update.router*."
+            }
+          },
+          "install_behavior": {
+            "name": "Install behavior",
+            "description": "How PatchPilot installs updates during a run.",
+            "data": {
+              "create_backup": "Create backups when supported",
+              "max_updates_per_run": "Maximum updates per run"
+            },
+            "data_description": {
+              "max_updates_per_run": "0 means no limit."
+            }
+          },
+          "notifications_history": {
+            "name": "Notifications and history",
+            "description": "Run triggers, failure alerts, and run history.",
+            "data": {
+              "run_on_state_change": "Run when updates appear",
+              "notify_on_failure": "Notify on failure",
+              "log_size": "Run history size"
+            },
+            "data_description": {
+              "log_size": "0 disables run history."
+            }
+          }
         }
       }
     },
@@ -30,19 +68,57 @@
     "step": {
       "init": {
         "title": "PatchPilot options",
-        "data": {
-          "enabled": "Enable automatic updates",
-          "check_interval_minutes": "Check interval",
-          "window_start": "Maintenance window start",
-          "window_end": "Maintenance window end",
-          "include_patterns": "Include entity patterns",
-          "exclude_patterns": "Exclude entity patterns",
-          "excluded_entities": "Excluded update entities",
-          "create_backup": "Create backups when supported",
-          "max_updates_per_run": "Maximum updates per run",
-          "run_on_state_change": "Run when updates appear",
-          "notify_on_failure": "Notify on failure",
-          "log_size": "Run history size"
+        "sections": {
+          "schedule": {
+            "name": "Schedule",
+            "description": "When PatchPilot checks for and installs updates.",
+            "data": {
+              "enabled": "Enable automatic updates",
+              "check_interval_minutes": "Check interval",
+              "window_start": "Maintenance window start",
+              "window_end": "Maintenance window end"
+            },
+            "data_description": {
+              "window_start": "Updates only install between this time and the window end.",
+              "window_end": "End of the maintenance window."
+            }
+          },
+          "what_to_update": {
+            "name": "What to update",
+            "description": "Choose which update entities PatchPilot manages.",
+            "data": {
+              "include_patterns": "Include entity patterns",
+              "exclude_patterns": "Exclude entity patterns",
+              "excluded_entities": "Excluded update entities"
+            },
+            "data_description": {
+              "include_patterns": "One shell-style glob per line, e.g. update.* or update.router*.",
+              "exclude_patterns": "One shell-style glob per line, e.g. update.* or update.router*."
+            }
+          },
+          "install_behavior": {
+            "name": "Install behavior",
+            "description": "How PatchPilot installs updates during a run.",
+            "data": {
+              "create_backup": "Create backups when supported",
+              "max_updates_per_run": "Maximum updates per run"
+            },
+            "data_description": {
+              "max_updates_per_run": "0 means no limit."
+            }
+          },
+          "notifications_history": {
+            "name": "Notifications and history",
+            "description": "Run triggers, failure alerts, and run history.",
+            "data": {
+              "run_on_state_change": "Run when updates appear",
+              "notify_on_failure": "Notify on failure",
+              "log_size": "Run history size"
+            },
+            "data_description": {
+              "log_size": "0 disables run history."
+            }
+          }
         }
       }
     },

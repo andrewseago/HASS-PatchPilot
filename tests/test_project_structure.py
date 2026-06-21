@@ -199,6 +199,39 @@ def test_manager_lists_skipped_updates_after_runs() -> None:
     assert '"skipped": result.filtered + result.uninstallable' in sensor_source
 
 
+def test_config_flow_groups_fields_into_sections_with_time_pickers() -> None:
+    """The config/options flow should use collapsible sections and time pickers."""
+    config_flow_source = (INTEGRATION_DIR / "config_flow.py").read_text()
+    strings = json.loads((INTEGRATION_DIR / "strings.json").read_text())
+
+    assert "from homeassistant.data_entry_flow import section" in config_flow_source
+    assert "TimeSelector" in config_flow_source
+    assert "TimeSelector()" in config_flow_source
+    assert "flatten_sectioned_input" in config_flow_source
+    assert "SECTION_MAP" in config_flow_source
+    assert "section(" in config_flow_source
+    assert '"collapsed": True' in config_flow_source
+    assert '"collapsed": False' in config_flow_source
+
+    for top in ("config", "options"):
+        step = "user" if top == "config" else "init"
+        sections = strings[top]["step"][step]["sections"]
+        assert set(sections) == {
+            "schedule",
+            "what_to_update",
+            "install_behavior",
+            "notifications_history",
+        }
+        assert sections["schedule"]["data"]["window_start"]
+        assert sections["schedule"]["data"]["window_end"]
+        assert "0 means no limit." in (
+            sections["install_behavior"]["data_description"]["max_updates_per_run"]
+        )
+        assert "0 disables run history." in (
+            sections["notifications_history"]["data_description"]["log_size"]
+        )
+
+
 def test_manager_debounces_update_state_change_runs() -> None:
     """Update-state bursts should schedule one delayed run, not one run per event."""
     manager_source = (INTEGRATION_DIR / "manager.py").read_text()

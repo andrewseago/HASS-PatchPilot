@@ -6,6 +6,7 @@ from typing import Any
 
 from homeassistant import config_entries
 from homeassistant.core import callback
+from homeassistant.data_entry_flow import section
 from homeassistant.helpers.selector import (
     BooleanSelector,
     EntitySelector,
@@ -15,6 +16,7 @@ from homeassistant.helpers.selector import (
     NumberSelectorMode,
     TextSelector,
     TextSelectorConfig,
+    TimeSelector,
 )
 import voluptuous as vol
 
@@ -45,7 +47,30 @@ from .const import (
     DEFAULT_WINDOW_START,
     DOMAIN,
 )
-from .update_logic import parse_time
+from .update_logic import flatten_sectioned_input, parse_time
+
+SECTION_MAP = {
+    "schedule": (
+        CONF_ENABLED,
+        CONF_CHECK_INTERVAL_MINUTES,
+        CONF_WINDOW_START,
+        CONF_WINDOW_END,
+    ),
+    "what_to_update": (
+        CONF_INCLUDE_PATTERNS,
+        CONF_EXCLUDE_PATTERNS,
+        CONF_EXCLUDED_ENTITIES,
+    ),
+    "install_behavior": (
+        CONF_CREATE_BACKUP,
+        CONF_MAX_UPDATES_PER_RUN,
+    ),
+    "notifications_history": (
+        CONF_RUN_ON_STATE_CHANGE,
+        CONF_NOTIFY_ON_FAILURE,
+        CONF_LOG_SIZE,
+    ),
+}
 
 
 class PatchPilotConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
@@ -59,6 +84,7 @@ class PatchPilotConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Handle the initial step."""
         errors: dict[str, str] = {}
         if user_input is not None:
+            user_input = flatten_sectioned_input(user_input, SECTION_MAP)
             errors = _validate_input(user_input)
             if not errors:
                 return self.async_create_entry(
@@ -95,6 +121,7 @@ class PatchPilotOptionsFlow(config_entries.OptionsFlow):
         errors: dict[str, str] = {}
         current = {**self.config_entry.data, **self.config_entry.options}
         if user_input is not None:
+            user_input = flatten_sectioned_input(user_input, SECTION_MAP)
             errors = _validate_input(user_input)
             if not errors:
                 return self.async_create_entry(
@@ -110,78 +137,127 @@ class PatchPilotOptionsFlow(config_entries.OptionsFlow):
 
 
 def _schema(values: dict[str, Any] | None = None) -> vol.Schema:
-    """Return config/options schema."""
+    """Return config/options schema grouped into collapsible sections."""
     values = values or {}
     return vol.Schema(
         {
-            vol.Optional(
-                CONF_ENABLED,
-                default=values.get(CONF_ENABLED, DEFAULT_ENABLED),
-            ): BooleanSelector(),
-            vol.Optional(
-                CONF_CHECK_INTERVAL_MINUTES,
-                default=values.get(
-                    CONF_CHECK_INTERVAL_MINUTES, DEFAULT_CHECK_INTERVAL_MINUTES
+            vol.Required("schedule"): section(
+                vol.Schema(
+                    {
+                        vol.Optional(
+                            CONF_ENABLED,
+                            default=values.get(CONF_ENABLED, DEFAULT_ENABLED),
+                        ): BooleanSelector(),
+                        vol.Optional(
+                            CONF_CHECK_INTERVAL_MINUTES,
+                            default=values.get(
+                                CONF_CHECK_INTERVAL_MINUTES,
+                                DEFAULT_CHECK_INTERVAL_MINUTES,
+                            ),
+                        ): NumberSelector(
+                            NumberSelectorConfig(
+                                min=5,
+                                max=1440,
+                                mode=NumberSelectorMode.BOX,
+                                unit_of_measurement="min",
+                            )
+                        ),
+                        vol.Optional(
+                            CONF_WINDOW_START,
+                            default=values.get(
+                                CONF_WINDOW_START, DEFAULT_WINDOW_START
+                            ),
+                        ): TimeSelector(),
+                        vol.Optional(
+                            CONF_WINDOW_END,
+                            default=values.get(CONF_WINDOW_END, DEFAULT_WINDOW_END),
+                        ): TimeSelector(),
+                    }
                 ),
-            ): NumberSelector(
-                NumberSelectorConfig(
-                    min=5,
-                    max=1440,
-                    mode=NumberSelectorMode.BOX,
-                    unit_of_measurement="min",
-                )
+                {"collapsed": False},
             ),
-            vol.Optional(
-                CONF_WINDOW_START,
-                default=values.get(CONF_WINDOW_START, DEFAULT_WINDOW_START),
-            ): TextSelector(TextSelectorConfig()),
-            vol.Optional(
-                CONF_WINDOW_END,
-                default=values.get(CONF_WINDOW_END, DEFAULT_WINDOW_END),
-            ): TextSelector(TextSelectorConfig()),
-            vol.Optional(
-                CONF_INCLUDE_PATTERNS,
-                default=_patterns_to_text(
-                    values.get(CONF_INCLUDE_PATTERNS, DEFAULT_INCLUDE_PATTERNS)
+            vol.Required("what_to_update"): section(
+                vol.Schema(
+                    {
+                        vol.Optional(
+                            CONF_INCLUDE_PATTERNS,
+                            default=_patterns_to_text(
+                                values.get(
+                                    CONF_INCLUDE_PATTERNS, DEFAULT_INCLUDE_PATTERNS
+                                )
+                            ),
+                        ): TextSelector(TextSelectorConfig(multiline=True)),
+                        vol.Optional(
+                            CONF_EXCLUDE_PATTERNS,
+                            default=_patterns_to_text(
+                                values.get(
+                                    CONF_EXCLUDE_PATTERNS, DEFAULT_EXCLUDE_PATTERNS
+                                )
+                            ),
+                        ): TextSelector(TextSelectorConfig(multiline=True)),
+                        vol.Optional(
+                            CONF_EXCLUDED_ENTITIES,
+                            default=values.get(
+                                CONF_EXCLUDED_ENTITIES, DEFAULT_EXCLUDED_ENTITIES
+                            ),
+                        ): EntitySelector(
+                            EntitySelectorConfig(domain="update", multiple=True)
+                        ),
+                    }
                 ),
-            ): TextSelector(TextSelectorConfig(multiline=True)),
-            vol.Optional(
-                CONF_EXCLUDE_PATTERNS,
-                default=_patterns_to_text(
-                    values.get(CONF_EXCLUDE_PATTERNS, DEFAULT_EXCLUDE_PATTERNS)
-                ),
-            ): TextSelector(TextSelectorConfig(multiline=True)),
-            vol.Optional(
-                CONF_EXCLUDED_ENTITIES,
-                default=values.get(CONF_EXCLUDED_ENTITIES, DEFAULT_EXCLUDED_ENTITIES),
-            ): EntitySelector(EntitySelectorConfig(domain="update", multiple=True)),
-            vol.Optional(
-                CONF_CREATE_BACKUP,
-                default=values.get(CONF_CREATE_BACKUP, DEFAULT_CREATE_BACKUP),
-            ): BooleanSelector(),
-            vol.Optional(
-                CONF_MAX_UPDATES_PER_RUN,
-                default=values.get(
-                    CONF_MAX_UPDATES_PER_RUN, DEFAULT_MAX_UPDATES_PER_RUN
-                ),
-            ): NumberSelector(
-                NumberSelectorConfig(min=0, max=100, mode=NumberSelectorMode.BOX)
+                {"collapsed": False},
             ),
-            vol.Optional(
-                CONF_RUN_ON_STATE_CHANGE,
-                default=values.get(
-                    CONF_RUN_ON_STATE_CHANGE, DEFAULT_RUN_ON_STATE_CHANGE
+            vol.Required("install_behavior"): section(
+                vol.Schema(
+                    {
+                        vol.Optional(
+                            CONF_CREATE_BACKUP,
+                            default=values.get(
+                                CONF_CREATE_BACKUP, DEFAULT_CREATE_BACKUP
+                            ),
+                        ): BooleanSelector(),
+                        vol.Optional(
+                            CONF_MAX_UPDATES_PER_RUN,
+                            default=values.get(
+                                CONF_MAX_UPDATES_PER_RUN,
+                                DEFAULT_MAX_UPDATES_PER_RUN,
+                            ),
+                        ): NumberSelector(
+                            NumberSelectorConfig(
+                                min=0, max=100, mode=NumberSelectorMode.BOX
+                            )
+                        ),
+                    }
                 ),
-            ): BooleanSelector(),
-            vol.Optional(
-                CONF_NOTIFY_ON_FAILURE,
-                default=values.get(CONF_NOTIFY_ON_FAILURE, DEFAULT_NOTIFY_ON_FAILURE),
-            ): BooleanSelector(),
-            vol.Optional(
-                CONF_LOG_SIZE,
-                default=values.get(CONF_LOG_SIZE, DEFAULT_LOG_SIZE),
-            ): NumberSelector(
-                NumberSelectorConfig(min=0, max=100, mode=NumberSelectorMode.BOX)
+                {"collapsed": True},
+            ),
+            vol.Required("notifications_history"): section(
+                vol.Schema(
+                    {
+                        vol.Optional(
+                            CONF_RUN_ON_STATE_CHANGE,
+                            default=values.get(
+                                CONF_RUN_ON_STATE_CHANGE,
+                                DEFAULT_RUN_ON_STATE_CHANGE,
+                            ),
+                        ): BooleanSelector(),
+                        vol.Optional(
+                            CONF_NOTIFY_ON_FAILURE,
+                            default=values.get(
+                                CONF_NOTIFY_ON_FAILURE, DEFAULT_NOTIFY_ON_FAILURE
+                            ),
+                        ): BooleanSelector(),
+                        vol.Optional(
+                            CONF_LOG_SIZE,
+                            default=values.get(CONF_LOG_SIZE, DEFAULT_LOG_SIZE),
+                        ): NumberSelector(
+                            NumberSelectorConfig(
+                                min=0, max=100, mode=NumberSelectorMode.BOX
+                            )
+                        ),
+                    }
+                ),
+                {"collapsed": True},
             ),
         }
     )
