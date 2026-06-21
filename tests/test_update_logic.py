@@ -30,6 +30,7 @@ requires_home_assistant_restart = getattr(
 )
 select_pending_updates = update_logic.select_pending_updates
 summarize_update_candidates = update_logic.summarize_update_candidates
+select_retry_entities = update_logic.select_retry_entities
 
 
 class UpdateLogicTests(unittest.TestCase):
@@ -155,6 +156,33 @@ class UpdateLogicTests(unittest.TestCase):
             requires_home_assistant_restart(
                 "update.pi_hole_web_update_available", "pi_hole"
             )
+        )
+
+
+class RetrySelectionTests(unittest.TestCase):
+    """Test retry entity selection from a run result's failed mapping."""
+
+    def test_none_failed_returns_empty_list(self) -> None:
+        self.assertEqual(select_retry_entities(None), [])
+
+    def test_empty_failed_returns_empty_list(self) -> None:
+        self.assertEqual(select_retry_entities({}), [])
+
+    def test_failed_mapping_returns_sorted_entity_ids(self) -> None:
+        failed = {
+            "update.router": "timeout",
+            "update.core": "install failed",
+            "update.hacs": "offline",
+        }
+        self.assertEqual(
+            select_retry_entities(failed),
+            ["update.core", "update.hacs", "update.router"],
+        )
+
+    def test_single_failed_entity(self) -> None:
+        self.assertEqual(
+            select_retry_entities({"update.core": "boom"}),
+            ["update.core"],
         )
 
 

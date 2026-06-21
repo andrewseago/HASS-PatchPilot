@@ -139,3 +139,10 @@ def summarize_update_candidates(
         uninstallable=uninstallable,
         filtered=filtered,
     )
+
+
+def select_retry_entities(failed: dict[str, str] | None) -> list[str]:
+    """Return the sorted entity ids to retry from a run result's failures."""
+    if not failed:
+        return []
+    return sorted(failed)
