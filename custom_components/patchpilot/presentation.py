@@ -23,9 +23,7 @@ def format_entity(entity_id: str, names: dict[str, str]) -> str:
 
 def _format_entity_list(entity_ids: Iterable[str], names: dict[str, str]) -> str:
     """Format a bulleted list of entities, one per line."""
-    return "\n".join(
-        f"- {format_entity(entity_id, names)}" for entity_id in entity_ids
-    )
+    return "\n".join(f"- {format_entity(entity_id, names)}" for entity_id in entity_ids)
 
 
 def format_skipped_sections(

@@ -164,9 +164,7 @@ def _schema(values: dict[str, Any] | None = None) -> vol.Schema:
                         ),
                         vol.Optional(
                             CONF_WINDOW_START,
-                            default=values.get(
-                                CONF_WINDOW_START, DEFAULT_WINDOW_START
-                            ),
+                            default=values.get(CONF_WINDOW_START, DEFAULT_WINDOW_START),
                         ): TimeSelector(),
                         vol.Optional(
                             CONF_WINDOW_END,

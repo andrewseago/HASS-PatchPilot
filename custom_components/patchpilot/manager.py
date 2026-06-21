@@ -635,4 +635,3 @@ def _normalize_patterns(value: Any) -> list[str]:
     if isinstance(value, str):
         return [line.strip() for line in value.splitlines() if line.strip()]
     return [str(item).strip() for item in value if str(item).strip()]
-
