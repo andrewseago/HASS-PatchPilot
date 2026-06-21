@@ -281,3 +281,14 @@ def test_manager_notifications_are_best_effort() -> None:
     assert "await self._async_notify_restart_required(result)" in manager_source
     assert "await self._async_notify_skipped_updates(result)" in manager_source
     assert "await self._async_clear_skipped_updates_notification()" in manager_source
+
+
+def test_manager_exposes_repair_retry_entry_point() -> None:
+    """The manager should offer a retry path and a fixable failure issue."""
+    manager_source = (INTEGRATION_DIR / "manager.py").read_text()
+
+    assert "async def async_retry_failed" in manager_source
+    assert 'reason="repair_retry"' in manager_source
+    assert "select_retry_entities" in manager_source
+    assert "is_fixable=True" in manager_source
+    assert 'data={"entry_id": self.entry.entry_id}' in manager_source

@@ -63,6 +63,7 @@ from .update_logic import (
     is_time_in_window,
     parse_time,
     requires_home_assistant_restart,
+    select_retry_entities,
     summarize_update_candidates,
 )
 
@@ -267,6 +268,25 @@ class PatchPilotManager:
             await self._async_update_notifications(result)
             await self._async_refresh_after_run(result)
             return self._finish(result)
+
+    async def async_retry_failed(self) -> UpdateRunResult:
+        """Re-run the most recently failed update entities, ignoring the window."""
+        last_result = self.last_result
+        failed = last_result.failed if last_result is not None else None
+        retry_ids = select_retry_entities(failed)
+        if not retry_ids:
+            now = dt_util.utcnow()
+            return UpdateRunResult(
+                reason="repair_retry",
+                started_at=now,
+                finished_at=now,
+                skipped_reason="nothing_to_retry",
+            )
+        return await self.async_run(
+            reason="repair_retry",
+            entity_ids=retry_ids,
+            ignore_window=True,
+        )
 
     async def _async_interval(self, _now: datetime) -> None:
         """Run periodic update pass."""
@@ -487,7 +507,7 @@ class PatchPilotManager:
             self.hass,
             DOMAIN,
             self._failure_issue_id,
-            is_fixable=False,
+            is_fixable=True,
             issue_domain=DOMAIN,
             severity=ir.IssueSeverity.WARNING,
             translation_key="last_run_failed",
@@ -495,6 +515,7 @@ class PatchPilotManager:
                 "count": str(len(result.failed)),
                 "entities": ", ".join(sorted(result.failed)),
             },
+            data={"entry_id": self.entry.entry_id},
         )
 
     async def _async_notify_failure(self, result: UpdateRunResult) -> None:
