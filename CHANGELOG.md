@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.1 - 2026-06-22
+
+- Fix a 500 error when opening **Configure**: the options flow no longer
+  assigns the now read-only `OptionsFlow.config_entry` property. Home
+  Assistant supplies it automatically.
+
 ## 0.4.0 - 2026-06-21
 
 - Split the configuration flow into grouped sections and use Home Assistant

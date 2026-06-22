@@ -9,7 +9,7 @@ import tomllib
 PROJECT_DOMAIN = "patchpilot"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_DIR = PROJECT_ROOT / "custom_components" / PROJECT_DOMAIN
-EXPECTED_VERSION = "0.4.0"
+EXPECTED_VERSION = "0.4.1"
 EXPECTED_HACS_VERSION = "2.0.0"
 EXPECTED_HOME_ASSISTANT_VERSION = "2026.6.0"
 
@@ -157,6 +157,19 @@ def test_config_flow_does_not_block_stale_hidden_entries() -> None:
     assert "async_set_unique_id(DOMAIN)" not in config_flow_source
     assert "_abort_if_unique_id_configured" not in config_flow_source
     assert "already_configured" not in strings_source
+
+
+def test_options_flow_does_not_assign_read_only_config_entry() -> None:
+    """OptionsFlow.config_entry is a read-only property on modern HA.
+
+    Assigning ``self.config_entry = config_entry`` raises AttributeError at
+    flow creation (a 500 on Configure). The base class supplies it
+    automatically, so the options flow must not set it.
+    """
+    config_flow_source = (INTEGRATION_DIR / "config_flow.py").read_text()
+
+    assert "self.config_entry = config_entry" not in config_flow_source
+    assert "PatchPilotOptionsFlow()" in config_flow_source
 
 
 def test_manager_only_requests_restart_for_ha_runtime_updates() -> None:
