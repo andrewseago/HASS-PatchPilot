@@ -34,12 +34,9 @@ class PatchPilotButton(PatchPilotEntity, ButtonEntity):
 
     _attr_entity_category = EntityCategory.CONFIG
 
-    def __init__(
-        self, manager: PatchPilotManager, key: str, name: str, icon: str
-    ) -> None:
+    def __init__(self, manager: PatchPilotManager, key: str) -> None:
         """Initialize button."""
-        super().__init__(manager, key, name)
-        self._attr_icon = icon
+        super().__init__(manager, key)
 
 
 class ScanUpdatesButton(PatchPilotButton):
@@ -47,7 +44,7 @@ class ScanUpdatesButton(PatchPilotButton):
 
     def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize button."""
-        super().__init__(manager, "scan_updates", "Scan updates", "mdi:refresh")
+        super().__init__(manager, "scan_updates")
 
     async def async_press(self) -> None:
         """Refresh update entities and PatchPilot counters."""
@@ -59,7 +56,7 @@ class DryRunButton(PatchPilotButton):
 
     def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize button."""
-        super().__init__(manager, "dry_run", "Dry run", "mdi:clipboard-search")
+        super().__init__(manager, "dry_run")
 
     async def async_press(self) -> None:
         """Run update selection without installing anything."""
@@ -75,7 +72,7 @@ class RunUpdatesButton(PatchPilotButton):
 
     def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize button."""
-        super().__init__(manager, "run_updates_now", "Run updates now", "mdi:play")
+        super().__init__(manager, "run_updates_now")
 
     async def async_press(self) -> None:
         """Install selected pending update entities now."""

@@ -41,19 +41,17 @@ class PatchPilotSensor(PatchPilotObservableEntity, SensorEntity):
 
     _attr_entity_category = EntityCategory.DIAGNOSTIC
 
-    def __init__(self, manager: PatchPilotManager, key: str, name: str) -> None:
+    def __init__(self, manager: PatchPilotManager, key: str) -> None:
         """Initialize sensor."""
-        super().__init__(manager, key, name)
+        super().__init__(manager, key)
 
 
 class PendingUpdatesSensor(PatchPilotSensor):
     """Raw pending update count."""
 
-    _attr_icon = "mdi:update"
-
     def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize sensor."""
-        super().__init__(manager, "pending_updates", "Pending updates")
+        super().__init__(manager, "pending_updates")
 
     @property
     def native_value(self) -> int:
@@ -75,11 +73,9 @@ class PendingUpdatesSensor(PatchPilotSensor):
 class InstallableUpdatesSensor(PatchPilotSensor):
     """Installable pending update count."""
 
-    _attr_icon = "mdi:package-up"
-
     def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize sensor."""
-        super().__init__(manager, "installable_updates", "Installable updates")
+        super().__init__(manager, "installable_updates")
 
     @property
     def native_value(self) -> int:
@@ -95,11 +91,9 @@ class InstallableUpdatesSensor(PatchPilotSensor):
 class SkippedUpdatesSensor(PatchPilotSensor):
     """Skipped pending update count."""
 
-    _attr_icon = "mdi:update-off"
-
     def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize sensor."""
-        super().__init__(manager, "skipped_updates", "Skipped updates")
+        super().__init__(manager, "skipped_updates")
 
     @property
     def native_value(self) -> int:
@@ -120,11 +114,10 @@ class LastRunSensor(PatchPilotSensor):
     """Last update run timestamp."""
 
     _attr_device_class = SensorDeviceClass.TIMESTAMP
-    _attr_icon = "mdi:clock-check-outline"
 
     def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize sensor."""
-        super().__init__(manager, "last_run", "Last run")
+        super().__init__(manager, "last_run")
 
     @property
     def native_value(self) -> datetime | None:
@@ -157,11 +150,9 @@ class LastRunSensor(PatchPilotSensor):
 class LastInstalledCountSensor(PatchPilotSensor):
     """Last installed update count."""
 
-    _attr_icon = "mdi:package-up"
-
     def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize sensor."""
-        super().__init__(manager, "last_installed_count", "Last installed count")
+        super().__init__(manager, "last_installed_count")
 
     @property
     def native_value(self) -> int:
@@ -174,11 +165,9 @@ class LastInstalledCountSensor(PatchPilotSensor):
 class LastFailedCountSensor(PatchPilotSensor):
     """Last failed update count."""
 
-    _attr_icon = "mdi:alert-circle-outline"
-
     def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize sensor."""
-        super().__init__(manager, "last_failed_count", "Last failed count")
+        super().__init__(manager, "last_failed_count")
 
     @property
     def native_value(self) -> int:
@@ -191,11 +180,9 @@ class LastFailedCountSensor(PatchPilotSensor):
 class RunHistorySensor(PatchPilotSensor):
     """Compact run-history sensor."""
 
-    _attr_icon = "mdi:history"
-
     def __init__(self, manager: PatchPilotManager) -> None:
         """Initialize sensor."""
-        super().__init__(manager, "run_history", "Run history")
+        super().__init__(manager, "run_history")
 
     @property
     def native_value(self) -> int:

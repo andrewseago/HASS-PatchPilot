@@ -30,6 +30,8 @@ requires_home_assistant_restart = getattr(
 )
 select_pending_updates = update_logic.select_pending_updates
 summarize_update_candidates = update_logic.summarize_update_candidates
+flatten_sectioned_input = update_logic.flatten_sectioned_input
+select_retry_entities = update_logic.select_retry_entities
 
 
 class UpdateLogicTests(unittest.TestCase):
@@ -156,6 +158,137 @@ class UpdateLogicTests(unittest.TestCase):
                 "update.pi_hole_web_update_available", "pi_hole"
             )
         )
+
+
+class RetrySelectionTests(unittest.TestCase):
+    """Test retry entity selection from a run result's failed mapping."""
+
+    def test_none_failed_returns_empty_list(self) -> None:
+        self.assertEqual(select_retry_entities(None), [])
+
+    def test_empty_failed_returns_empty_list(self) -> None:
+        self.assertEqual(select_retry_entities({}), [])
+
+    def test_failed_mapping_returns_sorted_entity_ids(self) -> None:
+        failed = {
+            "update.router": "timeout",
+            "update.core": "install failed",
+            "update.hacs": "offline",
+        }
+        self.assertEqual(
+            select_retry_entities(failed),
+            ["update.core", "update.hacs", "update.router"],
+        )
+
+    def test_single_failed_entity(self) -> None:
+        self.assertEqual(
+            select_retry_entities({"update.core": "boom"}),
+            ["update.core"],
+        )
+
+
+class FlattenSectionedInputTests(unittest.TestCase):
+    """Test flattening of Home Assistant config-flow sectioned input."""
+
+    section_map = {
+        "schedule": (
+            "enabled",
+            "check_interval_minutes",
+            "window_start",
+            "window_end",
+        ),
+        "what_to_update": (
+            "include_patterns",
+            "exclude_patterns",
+            "excluded_entities",
+        ),
+        "install_behavior": (
+            "create_backup",
+            "max_updates_per_run",
+        ),
+        "notifications_history": (
+            "run_on_state_change",
+            "notify_on_failure",
+            "log_size",
+        ),
+    }
+
+    def test_nested_sections_are_flattened(self) -> None:
+        user_input = {
+            "schedule": {
+                "enabled": True,
+                "check_interval_minutes": 30,
+                "window_start": "03:00:00",
+                "window_end": "05:00:00",
+            },
+            "what_to_update": {
+                "include_patterns": ["update.*"],
+                "exclude_patterns": [],
+                "excluded_entities": ["update.router"],
+            },
+            "install_behavior": {
+                "create_backup": True,
+                "max_updates_per_run": 5,
+            },
+            "notifications_history": {
+                "run_on_state_change": False,
+                "notify_on_failure": True,
+                "log_size": 50,
+            },
+        }
+        self.assertEqual(
+            flatten_sectioned_input(user_input, self.section_map),
+            {
+                "enabled": True,
+                "check_interval_minutes": 30,
+                "window_start": "03:00:00",
+                "window_end": "05:00:00",
+                "include_patterns": ["update.*"],
+                "exclude_patterns": [],
+                "excluded_entities": ["update.router"],
+                "create_backup": True,
+                "max_updates_per_run": 5,
+                "run_on_state_change": False,
+                "notify_on_failure": True,
+                "log_size": 50,
+            },
+        )
+
+    def test_already_flat_input_is_idempotent(self) -> None:
+        flat = {
+            "enabled": True,
+            "check_interval_minutes": 30,
+            "window_start": "03:00:00",
+            "window_end": "05:00:00",
+            "include_patterns": ["update.*"],
+            "max_updates_per_run": 5,
+        }
+        self.assertEqual(
+            flatten_sectioned_input(flat, self.section_map),
+            flat,
+        )
+
+    def test_stray_top_level_keys_pass_through(self) -> None:
+        user_input = {
+            "schedule": {
+                "enabled": True,
+                "check_interval_minutes": 30,
+            },
+            "name": "PatchPilot",
+            "max_updates_per_run": 3,
+        }
+        self.assertEqual(
+            flatten_sectioned_input(user_input, self.section_map),
+            {
+                "enabled": True,
+                "check_interval_minutes": 30,
+                "name": "PatchPilot",
+                "max_updates_per_run": 3,
+            },
+        )
+
+    def test_empty_input_returns_empty_dict(self) -> None:
+        self.assertEqual(flatten_sectioned_input({}, self.section_map), {})
 
 
 if __name__ == "__main__":

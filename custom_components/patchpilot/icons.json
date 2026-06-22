@@ -1,0 +1,54 @@
+{
+  "entity": {
+    "sensor": {
+      "pending_updates": {
+        "default": "mdi:update"
+      },
+      "installable_updates": {
+        "default": "mdi:package-up"
+      },
+      "skipped_updates": {
+        "default": "mdi:update-off"
+      },
+      "last_run": {
+        "default": "mdi:clock-check-outline"
+      },
+      "last_installed_count": {
+        "default": "mdi:package-up"
+      },
+      "last_failed_count": {
+        "range": {
+          "0": "mdi:check-circle-outline",
+          "1": "mdi:alert-circle-outline"
+        }
+      },
+      "run_history": {
+        "default": "mdi:history"
+      }
+    },
+    "binary_sensor": {
+      "restart_required": {
+        "state": {
+          "on": "mdi:restart-alert",
+          "off": "mdi:check-circle"
+        }
+      }
+    },
+    "switch": {
+      "automatic_updates": {
+        "default": "mdi:auto-fix"
+      }
+    },
+    "button": {
+      "scan_updates": {
+        "default": "mdi:refresh"
+      },
+      "dry_run": {
+        "default": "mdi:clipboard-search"
+      },
+      "run_updates_now": {
+        "default": "mdi:play"
+      }
+    }
+  }
+}

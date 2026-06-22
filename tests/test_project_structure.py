@@ -9,7 +9,7 @@ import tomllib
 PROJECT_DOMAIN = "patchpilot"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 INTEGRATION_DIR = PROJECT_ROOT / "custom_components" / PROJECT_DOMAIN
-EXPECTED_VERSION = "0.3.8"
+EXPECTED_VERSION = "0.4.0"
 EXPECTED_HACS_VERSION = "2.0.0"
 EXPECTED_HOME_ASSISTANT_VERSION = "2026.6.0"
 
@@ -47,8 +47,12 @@ def test_repository_has_standard_integration_files() -> None:
         "requirements.txt",
         "requirements_dev.txt",
         "custom_components/__init__.py",
+        "custom_components/patchpilot/binary_sensor.py",
         "custom_components/patchpilot/button.py",
         "custom_components/patchpilot/entity.py",
+        "custom_components/patchpilot/icons.json",
+        "custom_components/patchpilot/presentation.py",
+        "custom_components/patchpilot/repairs.py",
         "custom_components/patchpilot/switch.py",
         "custom_components/patchpilot/translations/en.json",
     )
@@ -101,7 +105,7 @@ def test_integration_forwards_ui_control_platforms() -> None:
     const_source = (INTEGRATION_DIR / "const.py").read_text()
     init_source = (INTEGRATION_DIR / "__init__.py").read_text()
 
-    assert 'PLATFORMS = ["button", "sensor", "switch"]' in const_source
+    assert 'PLATFORMS = ["binary_sensor", "button", "sensor", "switch"]' in const_source
     assert "async_forward_entry_setups(entry, PLATFORMS)" in init_source
 
 
@@ -159,6 +163,7 @@ def test_manager_only_requests_restart_for_ha_runtime_updates() -> None:
     """PatchPilot should not ask for an HA restart after external updates."""
     manager_source = (INTEGRATION_DIR / "manager.py").read_text()
     update_logic_source = (INTEGRATION_DIR / "update_logic.py").read_text()
+    presentation_source = (INTEGRATION_DIR / "presentation.py").read_text()
 
     assert "requires_home_assistant_restart" in update_logic_source
     assert 'HA_RESTART_UPDATE_PLATFORMS = frozenset({"hacs"})' in update_logic_source
@@ -174,8 +179,9 @@ def test_manager_only_requests_restart_for_ha_runtime_updates() -> None:
     assert "await self._async_notify_updates_installed(result)" in manager_source
     assert "entity_registry.async_get(self.hass)" in manager_source
     assert '"restart_required": result.restart_required' in manager_source
-    assert '"title": "PatchPilot restart required"' in manager_source
-    assert '"title": "PatchPilot updates installed"' in manager_source
+    # Notification title text moved to presentation.py.
+    assert '"PatchPilot restart required"' in presentation_source
+    assert '"PatchPilot updates installed"' in presentation_source
     assert "_restart_required" in manager_source
 
 
@@ -183,6 +189,7 @@ def test_manager_lists_skipped_updates_after_runs() -> None:
     """PatchPilot should list skipped pending updates and why they were skipped."""
     manager_source = (INTEGRATION_DIR / "manager.py").read_text()
     sensor_source = (INTEGRATION_DIR / "sensor.py").read_text()
+    presentation_source = (INTEGRATION_DIR / "presentation.py").read_text()
 
     assert "filtered: list[str]" in manager_source
     assert "uninstallable: list[str]" in manager_source
@@ -190,13 +197,47 @@ def test_manager_lists_skipped_updates_after_runs() -> None:
     assert "result.uninstallable = [" in manager_source
     assert "await self._async_notify_skipped_updates(result)" in manager_source
     assert "async def _async_notify_skipped_updates" in manager_source
-    assert "Filtered by PatchPilot configuration" in manager_source
-    assert "Pending but not installable through Home Assistant" in manager_source
+    # Skipped-section labels moved to presentation.py.
+    assert "Filtered by PatchPilot configuration" in presentation_source
+    assert "Pending but not installable through Home Assistant" in presentation_source
     assert "await self._async_clear_skipped_updates_notification()" in manager_source
     assert '"skipped": result.filtered + result.uninstallable' in manager_source
     assert '"filtered": result.filtered' in manager_source
     assert '"uninstallable": result.uninstallable' in manager_source
     assert '"skipped": result.filtered + result.uninstallable' in sensor_source
+
+
+def test_config_flow_groups_fields_into_sections_with_time_pickers() -> None:
+    """The config/options flow should use collapsible sections and time pickers."""
+    config_flow_source = (INTEGRATION_DIR / "config_flow.py").read_text()
+    strings = json.loads((INTEGRATION_DIR / "strings.json").read_text())
+
+    assert "from homeassistant.data_entry_flow import section" in config_flow_source
+    assert "TimeSelector" in config_flow_source
+    assert "TimeSelector()" in config_flow_source
+    assert "flatten_sectioned_input" in config_flow_source
+    assert "SECTION_MAP" in config_flow_source
+    assert "section(" in config_flow_source
+    assert '"collapsed": True' in config_flow_source
+    assert '"collapsed": False' in config_flow_source
+
+    for top in ("config", "options"):
+        step = "user" if top == "config" else "init"
+        sections = strings[top]["step"][step]["sections"]
+        assert set(sections) == {
+            "schedule",
+            "what_to_update",
+            "install_behavior",
+            "notifications_history",
+        }
+        assert sections["schedule"]["data"]["window_start"]
+        assert sections["schedule"]["data"]["window_end"]
+        assert "0 means no limit." in (
+            sections["install_behavior"]["data_description"]["max_updates_per_run"]
+        )
+        assert "0 disables run history." in (
+            sections["notifications_history"]["data_description"]["log_size"]
+        )
 
 
 def test_manager_debounces_update_state_change_runs() -> None:
@@ -244,3 +285,60 @@ def test_manager_notifications_are_best_effort() -> None:
     assert "await self._async_notify_restart_required(result)" in manager_source
     assert "await self._async_notify_skipped_updates(result)" in manager_source
     assert "await self._async_clear_skipped_updates_notification()" in manager_source
+
+
+def test_manager_exposes_repair_retry_entry_point() -> None:
+    """The manager should offer a retry path and a fixable failure issue."""
+    manager_source = (INTEGRATION_DIR / "manager.py").read_text()
+
+    assert "async def async_retry_failed" in manager_source
+    assert 'reason="repair_retry"' in manager_source
+    assert "select_retry_entities" in manager_source
+    assert "is_fixable=True" in manager_source
+    assert 'data={"entry_id": self.entry.entry_id}' in manager_source
+
+
+def test_failed_run_repair_offers_fixable_menu() -> None:
+    """The failed-run repair issue should expose a fixable retry/dismiss flow."""
+    repairs_path = INTEGRATION_DIR / "repairs.py"
+    assert repairs_path.is_file()
+
+    repairs_source = repairs_path.read_text()
+    assert "async def async_create_fix_flow" in repairs_source
+    assert "RepairsFlow" in repairs_source
+    assert "async_show_menu" in repairs_source
+    assert "async_retry_failed" in repairs_source
+
+    strings = json.loads((INTEGRATION_DIR / "strings.json").read_text())
+    last_run_failed = strings["issues"]["last_run_failed"]
+    assert "fix_flow" in last_run_failed
+    assert "description" not in last_run_failed
+    menu_options = last_run_failed["fix_flow"]["step"]["init"]["menu_options"]
+    assert set(menu_options) == {"retry", "dismiss"}
+
+
+def test_icons_json_is_valid_and_matches_entity_translation_keys() -> None:
+    """icons.json entity keys must mirror the strings.json entity keys."""
+    icons = json.loads((INTEGRATION_DIR / "icons.json").read_text())
+    strings = json.loads((INTEGRATION_DIR / "strings.json").read_text())
+
+    assert isinstance(icons, dict)
+    assert isinstance(icons.get("entity"), dict)
+    assert isinstance(strings.get("entity"), dict)
+
+    def _platform_key_pairs(entity_block: dict) -> set[tuple[str, str]]:
+        pairs: set[tuple[str, str]] = set()
+        for platform, keys in entity_block.items():
+            assert isinstance(keys, dict), platform
+            for key in keys:
+                pairs.add((platform, key))
+        return pairs
+
+    icon_pairs = _platform_key_pairs(icons["entity"])
+    strings_pairs = _platform_key_pairs(strings["entity"])
+
+    assert icon_pairs, "icons.json defines no entity icons"
+    assert icon_pairs == strings_pairs, {
+        "missing_name_in_strings": sorted(icon_pairs - strings_pairs),
+        "missing_icon_in_icons": sorted(strings_pairs - icon_pairs),
+    }

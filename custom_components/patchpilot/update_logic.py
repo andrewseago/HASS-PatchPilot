@@ -6,6 +6,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from datetime import time
 from fnmatch import fnmatchcase
+from typing import Any
 
 STATE_PENDING = "on"
 HA_RESTART_UPDATE_ENTITY_IDS = frozenset({"update.home_assistant_core_update"})
@@ -139,3 +140,32 @@ def summarize_update_candidates(
         uninstallable=uninstallable,
         filtered=filtered,
     )
+
+
+def select_retry_entities(failed: dict[str, str] | None) -> list[str]:
+    """Return the sorted entity ids to retry from a run result's failures."""
+    if not failed:
+        return []
+    return sorted(failed)
+
+
+def flatten_sectioned_input(
+    user_input: dict[str, Any],
+    section_map: dict[str, tuple[str, ...]],
+) -> dict[str, Any]:
+    """Flatten Home Assistant config-flow sectioned input to a flat dict.
+
+    Keys that are section names in ``section_map`` have their listed child
+    fields lifted to the top level; any other key is copied through unchanged,
+    so already-flat input is handled idempotently.
+    """
+    flat: dict[str, Any] = {}
+    for key, value in user_input.items():
+        fields = section_map.get(key)
+        if fields is not None and isinstance(value, Mapping):
+            for field in fields:
+                if field in value:
+                    flat[field] = value[field]
+        else:
+            flat[key] = value
+    return flat

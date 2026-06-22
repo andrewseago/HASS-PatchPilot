@@ -15,3 +15,7 @@ behavior, and run history size.
 
 PatchPilot exposes sensors for raw pending updates, installable updates, skipped
 updates, last run, installed count, failed count, and run history.
+
+A `Restart required` binary sensor flags when an installed update needs a Home
+Assistant restart. See the README for a ready-to-paste Lovelace dashboard built
+from Home Assistant's built-in cards.

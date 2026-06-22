@@ -5,7 +5,7 @@ from __future__ import annotations
 from datetime import time
 
 DOMAIN = "patchpilot"
-PLATFORMS = ["button", "sensor", "switch"]
+PLATFORMS = ["binary_sensor", "button", "sensor", "switch"]
 
 CONF_ENABLED = "enabled"
 CONF_CHECK_INTERVAL_MINUTES = "check_interval_minutes"

@@ -16,10 +16,10 @@ class PatchPilotEntity:
 
     _attr_has_entity_name = True
 
-    def __init__(self, manager: PatchPilotManager, key: str, name: str) -> None:
+    def __init__(self, manager: PatchPilotManager, key: str) -> None:
         """Initialize entity metadata."""
         self.manager = manager
-        self._attr_name = name
+        self._attr_translation_key = key
         self._attr_unique_id = f"{manager.entry.entry_id}_{key}"
 
     @property
@@ -37,9 +37,9 @@ class PatchPilotEntity:
 class PatchPilotObservableEntity(PatchPilotEntity):
     """Entity that updates when the manager state changes."""
 
-    def __init__(self, manager: PatchPilotManager, key: str, name: str) -> None:
+    def __init__(self, manager: PatchPilotManager, key: str) -> None:
         """Initialize observable entity metadata."""
-        super().__init__(manager, key, name)
+        super().__init__(manager, key)
         self._unsub: Callable[[], None] | None = None
 
     async def async_added_to_hass(self) -> None:

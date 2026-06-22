@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.4.0 - 2026-06-21
+
+- Split the configuration flow into grouped sections and use Home Assistant
+  time selectors for the maintenance-window start and end times.
+- Add a `translation_key` to every entity, package an `icons.json` so each
+  entity shows a Material Design icon, and add a `Restart required` binary
+  sensor that reports when an installed update needs a Home Assistant restart.
+- Render friendly entity names in PatchPilot notifications by resolving entity
+  display names through a shared `presentation` helper.
+- Make the failed-install repair issue fixable with a repair flow that retries
+  the failed updates or dismisses the issue.
+- Document a ready-to-paste Lovelace dashboard and the new restart-required
+  binary sensor in the README.
+
 ## 0.3.8 - 2026-06-20
 
 - Only request a Home Assistant restart for installed updates that affect the
